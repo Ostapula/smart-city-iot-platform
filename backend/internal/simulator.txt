@@ -1,0 +1,139 @@
+// simulator.go
+package main
+
+import (
+	"encoding/json"
+	"math"
+	"time"
+)
+
+type CarData struct {
+	ID        string  `json:"id"`
+	Position  Vector3 `json:"position"`
+	Direction Vector3 `json:"direction"`
+	Speed     float64 `json:"speed"`
+}
+
+type Vector3 struct {
+	X float64 `json:"x"`
+	Y float64 `json:"y"`
+	Z float64 `json:"z"`
+}
+
+var carDataList []CarData
+var defaultSpeed = 0.8
+
+func init() {
+	// Initialize carDataList with some cars
+	carDataList = []CarData{
+		{
+			ID:        "car1",
+			Position:  Vector3{X: -2, Y: 0.25, Z: -30},
+			Direction: Vector3{X: 0, Y: 0, Z: 1},
+			Speed:     defaultSpeed,
+		},
+		{
+			ID:        "car2",
+			Position:  Vector3{X: 2, Y: 0.25, Z: 50},
+			Direction: Vector3{X: 0, Y: 0, Z: -1},
+			Speed:     defaultSpeed,
+		},
+		{
+			ID:        "car3",
+			Position:  Vector3{X: -50, Y: 0.25, Z: 2},
+			Direction: Vector3{X: 1, Y: 0, Z: 0},
+			Speed:     defaultSpeed,
+		},
+		{
+			ID:        "car4",
+			Position:  Vector3{X: 45, Y: 0.25, Z: -2},
+			Direction: Vector3{X: -1, Y: 0, Z: 0},
+			Speed:     defaultSpeed,
+		},
+	}
+}
+
+func simulateTrafficFlow() {
+	ticker := time.NewTicker(100 * time.Millisecond)
+	for range ticker.C {
+		for i := range carDataList {
+			car := &carDataList[i]
+
+			// Update car position based on speed and direction
+			car.Position.X += car.Direction.X * car.Speed
+			car.Position.Y += car.Direction.Y * car.Speed
+			car.Position.Z += car.Direction.Z * car.Speed
+
+			// Implement logic to stop cars at red lights
+			if shouldCarStopAtTrafficLight(car) {
+				car.Speed = 0
+			} else {
+				car.Speed = defaultSpeed
+			}
+
+			// Loop car position if it goes out of bounds
+			loopCarPosition(car)
+		}
+	}
+}
+
+func shouldCarStopAtTrafficLight(car *CarData) bool {
+	// Determine if the car is approaching the intersection
+	// For simplicity, define a stop zone near the intersection
+	stopDistance := 10.0
+
+	// Calculate distance to intersection along the direction of movement
+	if car.Direction.Z != 0 { // Moving along Z-axis
+		if math.Abs(car.Position.Z) < stopDistance && car.Direction.Z*car.Position.Z < 0 {
+			// Car is approaching intersection
+			if trafficLightState == "red" {
+				return true
+			}
+		}
+	} else if car.Direction.X != 0 { // Moving along X-axis
+		if math.Abs(car.Position.X) < stopDistance && car.Direction.X*car.Position.X < 0 {
+			// Car is approaching intersection
+			if trafficLightState == "red" {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func loopCarPosition(car *CarData) {
+	// Define bounds
+	maxX, maxZ := 100.0, 100.0
+	if math.Abs(car.Position.X) > maxX || math.Abs(car.Position.Z) > maxZ {
+		// Reset car position
+		resetCarPosition(car)
+	}
+}
+
+func resetCarPosition(car *CarData) {
+	// Reset position based on car ID
+	switch car.ID {
+	case "car1":
+		car.Position = Vector3{X: -2, Y: 0.25, Z: -30}
+	case "car2":
+		car.Position = Vector3{X: 2, Y: 0.25, Z: 50}
+	case "car3":
+		car.Position = Vector3{X: -50, Y: 0.25, Z: 2}
+	case "car4":
+		car.Position = Vector3{X: 45, Y: 0.25, Z: -2}
+	}
+}
+
+func broadcastUpdates() {
+	ticker := time.NewTicker(500 * time.Millisecond)
+	for range ticker.C {
+		data := map[string]interface{}{
+			"type":              "update",
+			"trafficLightState": trafficLightState,
+			"cars":              carDataList,
+		}
+		dataJSON, _ := json.Marshal(data)
+		broadcast <- dataJSON
+	}
+}

@@ -1,0 +1,2857 @@
+{
+  "asset": {
+    "version": "2.0",
+    "generator": "THREE.GLTFExporter r171"
+  },
+  "scenes": [
+    {
+      "name": "Scene",
+      "nodes": [
+        4,
+        11,
+        18,
+        25,
+        32,
+        50,
+        57,
+        64,
+        71,
+        78,
+        79,
+        80,
+        81,
+        82,
+        85,
+        88,
+        89,
+        90,
+        91
+      ]
+    }
+  ],
+  "scene": 0,
+  "nodes": [
+    {
+      "matrix": [
+        30,
+        0,
+        0,
+        0,
+        0,
+        6.661338147750939e-15,
+        -30,
+        0,
+        0,
+        1,
+        2.220446049250313e-16,
+        0,
+        15,
+        0,
+        15,
+        1
+      ],
+      "name": "Ground",
+      "mesh": 0
+    },
+    {
+      "matrix": [
+        30,
+        0,
+        0,
+        0,
+        0,
+        6.661338147750939e-15,
+        -30,
+        0,
+        0,
+        1,
+        2.220446049250313e-16,
+        0,
+        15,
+        0,
+        -15,
+        1
+      ],
+      "name": "Ground",
+      "mesh": 0
+    },
+    {
+      "matrix": [
+        30,
+        0,
+        0,
+        0,
+        0,
+        6.661338147750939e-15,
+        -30,
+        0,
+        0,
+        1,
+        2.220446049250313e-16,
+        0,
+        -15,
+        0,
+        -15,
+        1
+      ],
+      "name": "Ground",
+      "mesh": 0
+    },
+    {
+      "matrix": [
+        30,
+        0,
+        0,
+        0,
+        0,
+        6.661338147750939e-15,
+        -30,
+        0,
+        0,
+        1,
+        2.220446049250313e-16,
+        0,
+        -15,
+        0,
+        15,
+        1
+      ],
+      "name": "Ground",
+      "mesh": 0
+    },
+    {
+      "matrix": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        -0.000034092090550608134,
+        1
+      ],
+      "name": "Ground",
+      "children": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08242295510040176,
+        -2,
+        1
+      ],
+      "name": "Box",
+      "mesh": 1
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08242295510040176,
+        0,
+        1
+      ],
+      "name": "Box",
+      "mesh": 1
+    },
+    {
+      "matrix": [
+        6,
+        0,
+        0,
+        0,
+        0,
+        2.220446049250313e-15,
+        -10,
+        0,
+        0,
+        1,
+        2.220446049250313e-16,
+        0,
+        0,
+        0.1,
+        0,
+        1
+      ],
+      "name": "Plane",
+      "mesh": 2
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08,
+        4,
+        1
+      ],
+      "name": "Box",
+      "mesh": 3
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08,
+        2,
+        1
+      ],
+      "name": "Box",
+      "mesh": 4
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08242295510040176,
+        -4,
+        1
+      ],
+      "name": "Box",
+      "mesh": 1
+    },
+    {
+      "matrix": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        8,
+        1
+      ],
+      "name": "Road",
+      "children": [
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08242295510040176,
+        -2,
+        1
+      ],
+      "name": "Box",
+      "mesh": 1
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08242295510040176,
+        0,
+        1
+      ],
+      "name": "Box",
+      "mesh": 1
+    },
+    {
+      "matrix": [
+        6,
+        0,
+        0,
+        0,
+        0,
+        2.220446049250313e-15,
+        -10,
+        0,
+        0,
+        1,
+        2.220446049250313e-16,
+        0,
+        0,
+        0.1,
+        0,
+        1
+      ],
+      "name": "Plane",
+      "mesh": 2
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08,
+        4,
+        1
+      ],
+      "name": "Box",
+      "mesh": 3
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08,
+        2,
+        1
+      ],
+      "name": "Box",
+      "mesh": 4
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08242295510040176,
+        -4,
+        1
+      ],
+      "name": "Box",
+      "mesh": 1
+    },
+    {
+      "matrix": [
+        2.220446049250313e-16,
+        0,
+        -1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        2.220446049250313e-16,
+        0,
+        -8,
+        0,
+        0,
+        1
+      ],
+      "name": "Road",
+      "children": [
+        12,
+        13,
+        14,
+        15,
+        16,
+        17
+      ]
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08242295510040176,
+        -2,
+        1
+      ],
+      "name": "Box",
+      "mesh": 1
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08242295510040176,
+        0,
+        1
+      ],
+      "name": "Box",
+      "mesh": 1
+    },
+    {
+      "matrix": [
+        6,
+        0,
+        0,
+        0,
+        0,
+        2.220446049250313e-15,
+        -10,
+        0,
+        0,
+        1,
+        2.220446049250313e-16,
+        0,
+        0,
+        0.1,
+        0,
+        1
+      ],
+      "name": "Plane",
+      "mesh": 2
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08,
+        4,
+        1
+      ],
+      "name": "Box",
+      "mesh": 3
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08,
+        2,
+        1
+      ],
+      "name": "Box",
+      "mesh": 4
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08242295510040176,
+        -4,
+        1
+      ],
+      "name": "Box",
+      "mesh": 1
+    },
+    {
+      "matrix": [
+        2.220446049250313e-16,
+        0,
+        -1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        2.220446049250313e-16,
+        0,
+        8,
+        0,
+        0,
+        1
+      ],
+      "name": "Road",
+      "children": [
+        19,
+        20,
+        21,
+        22,
+        23,
+        24
+      ]
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08242295510040176,
+        -2,
+        1
+      ],
+      "name": "Box",
+      "mesh": 1
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08242295510040176,
+        0,
+        1
+      ],
+      "name": "Box",
+      "mesh": 1
+    },
+    {
+      "matrix": [
+        6,
+        0,
+        0,
+        0,
+        0,
+        2.220446049250313e-15,
+        -10,
+        0,
+        0,
+        1,
+        2.220446049250313e-16,
+        0,
+        0,
+        0.1,
+        0,
+        1
+      ],
+      "name": "Plane",
+      "mesh": 2
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08,
+        4,
+        1
+      ],
+      "name": "Box",
+      "mesh": 3
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08,
+        2,
+        1
+      ],
+      "name": "Box",
+      "mesh": 4
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08242295510040176,
+        -4,
+        1
+      ],
+      "name": "Box",
+      "mesh": 1
+    },
+    {
+      "matrix": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        -8.000763585026075,
+        1
+      ],
+      "name": "Road",
+      "children": [
+        26,
+        27,
+        28,
+        29,
+        30,
+        31
+      ]
+    },
+    {
+      "matrix": [
+        6.661338147750939e-17,
+        0,
+        -0.3,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0.9,
+        0,
+        1.9984014443252818e-16,
+        0,
+        -1.3,
+        0.08242295510040176,
+        -3.007621195606302,
+        1
+      ],
+      "name": "Box",
+      "mesh": 1
+    },
+    {
+      "matrix": [
+        6.661338147750939e-17,
+        0,
+        -0.3,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0.9,
+        0,
+        1.9984014443252818e-16,
+        0,
+        -0.28,
+        0.08242295510040176,
+        -3.007621195606302,
+        1
+      ],
+      "name": "Box",
+      "mesh": 1
+    },
+    {
+      "matrix": [
+        6.661338147750939e-17,
+        0,
+        -0.3,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0.9,
+        0,
+        1.9984014443252818e-16,
+        0,
+        -2.3,
+        0.08242295510040176,
+        -3.007621195606302,
+        1
+      ],
+      "name": "Box",
+      "mesh": 1
+    },
+    {
+      "matrix": [
+        -1,
+        0,
+        -1.2246467991473532e-16,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1.2246467991473532e-16,
+        0,
+        -1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "name": "Group",
+      "children": [
+        33,
+        34,
+        35
+      ]
+    },
+    {
+      "matrix": [
+        6.661338147750939e-17,
+        0,
+        -0.3,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0.9,
+        0,
+        1.9984014443252818e-16,
+        0,
+        -1.3,
+        0.08242295510040176,
+        -3.007621195606302,
+        1
+      ],
+      "name": "Box",
+      "mesh": 1
+    },
+    {
+      "matrix": [
+        6.661338147750939e-17,
+        0,
+        -0.3,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0.9,
+        0,
+        1.9984014443252818e-16,
+        0,
+        -0.28,
+        0.08242295510040176,
+        -3.007621195606302,
+        1
+      ],
+      "name": "Box",
+      "mesh": 1
+    },
+    {
+      "matrix": [
+        6.661338147750939e-17,
+        0,
+        -0.3,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0.9,
+        0,
+        1.9984014443252818e-16,
+        0,
+        -2.3,
+        0.08242295510040176,
+        -3.007621195606302,
+        1
+      ],
+      "name": "Box",
+      "mesh": 1
+    },
+    {
+      "matrix": [
+        2.220446049250313e-16,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        -1,
+        0,
+        2.220446049250313e-16,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "name": "Group",
+      "children": [
+        37,
+        38,
+        39
+      ]
+    },
+    {
+      "matrix": [
+        6.661338147750939e-17,
+        0,
+        -0.3,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0.9,
+        0,
+        1.9984014443252818e-16,
+        0,
+        -1.3,
+        0.08242295510040176,
+        -3.007621195606302,
+        1
+      ],
+      "name": "Box",
+      "mesh": 1
+    },
+    {
+      "matrix": [
+        6.661338147750939e-17,
+        0,
+        -0.3,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0.9,
+        0,
+        1.9984014443252818e-16,
+        0,
+        -0.28,
+        0.08242295510040176,
+        -3.007621195606302,
+        1
+      ],
+      "name": "Box",
+      "mesh": 1
+    },
+    {
+      "matrix": [
+        6.661338147750939e-17,
+        0,
+        -0.3,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0.9,
+        0,
+        1.9984014443252818e-16,
+        0,
+        -2.3,
+        0.08242295510040176,
+        -3.007621195606302,
+        1
+      ],
+      "name": "Box",
+      "mesh": 1
+    },
+    {
+      "matrix": [
+        2.220446049250313e-16,
+        0,
+        -1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        2.220446049250313e-16,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "name": "Group",
+      "children": [
+        41,
+        42,
+        43
+      ]
+    },
+    {
+      "matrix": [
+        6.661338147750939e-17,
+        0,
+        -0.3,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0.9,
+        0,
+        1.9984014443252818e-16,
+        0,
+        -1.3,
+        0.08242295510040176,
+        -3.007621195606302,
+        1
+      ],
+      "name": "Box",
+      "mesh": 1
+    },
+    {
+      "matrix": [
+        6.661338147750939e-17,
+        0,
+        -0.3,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0.9,
+        0,
+        1.9984014443252818e-16,
+        0,
+        -0.28,
+        0.08242295510040176,
+        -3.007621195606302,
+        1
+      ],
+      "name": "Box",
+      "mesh": 1
+    },
+    {
+      "matrix": [
+        6.661338147750939e-17,
+        0,
+        -0.3,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0.9,
+        0,
+        1.9984014443252818e-16,
+        0,
+        -2.3,
+        0.08242295510040176,
+        -3.007621195606302,
+        1
+      ],
+      "name": "Box",
+      "mesh": 1
+    },
+    {
+      "name": "Group",
+      "children": [
+        45,
+        46,
+        47
+      ]
+    },
+    {
+      "matrix": [
+        6,
+        0,
+        0,
+        0,
+        0,
+        1.3322676295501878e-15,
+        -6,
+        0,
+        0,
+        1,
+        2.220446049250313e-16,
+        0,
+        0,
+        0.1,
+        0,
+        1
+      ],
+      "name": "Plane",
+      "mesh": 2
+    },
+    {
+      "name": "Crossroad",
+      "children": [
+        36,
+        40,
+        44,
+        48,
+        49
+      ]
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08242295510040176,
+        -2,
+        1
+      ],
+      "name": "Box",
+      "mesh": 1
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08242295510040176,
+        0,
+        1
+      ],
+      "name": "Box",
+      "mesh": 1
+    },
+    {
+      "matrix": [
+        6,
+        0,
+        0,
+        0,
+        0,
+        2.220446049250313e-15,
+        -10,
+        0,
+        0,
+        1,
+        2.220446049250313e-16,
+        0,
+        0,
+        0.1,
+        0,
+        1
+      ],
+      "name": "Plane",
+      "mesh": 2
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08,
+        4,
+        1
+      ],
+      "name": "Box",
+      "mesh": 3
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08,
+        2,
+        1
+      ],
+      "name": "Box",
+      "mesh": 4
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08242295510040176,
+        -4,
+        1
+      ],
+      "name": "Box",
+      "mesh": 1
+    },
+    {
+      "matrix": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        -18,
+        1
+      ],
+      "name": "Road",
+      "children": [
+        51,
+        52,
+        53,
+        54,
+        55,
+        56
+      ]
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08242295510040176,
+        -2,
+        1
+      ],
+      "name": "Box",
+      "mesh": 1
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08242295510040176,
+        0,
+        1
+      ],
+      "name": "Box",
+      "mesh": 1
+    },
+    {
+      "matrix": [
+        6,
+        0,
+        0,
+        0,
+        0,
+        2.220446049250313e-15,
+        -10,
+        0,
+        0,
+        1,
+        2.220446049250313e-16,
+        0,
+        0,
+        0.1,
+        0,
+        1
+      ],
+      "name": "Plane",
+      "mesh": 2
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08,
+        4,
+        1
+      ],
+      "name": "Box",
+      "mesh": 3
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08,
+        2,
+        1
+      ],
+      "name": "Box",
+      "mesh": 4
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08242295510040176,
+        -4,
+        1
+      ],
+      "name": "Box",
+      "mesh": 1
+    },
+    {
+      "matrix": [
+        2.220446049250313e-16,
+        0,
+        -1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        2.220446049250313e-16,
+        0,
+        -18,
+        0,
+        0,
+        1
+      ],
+      "name": "Road",
+      "children": [
+        58,
+        59,
+        60,
+        61,
+        62,
+        63
+      ]
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08242295510040176,
+        -2,
+        1
+      ],
+      "name": "Box",
+      "mesh": 1
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08242295510040176,
+        0,
+        1
+      ],
+      "name": "Box",
+      "mesh": 1
+    },
+    {
+      "matrix": [
+        6,
+        0,
+        0,
+        0,
+        0,
+        2.220446049250313e-15,
+        -10,
+        0,
+        0,
+        1,
+        2.220446049250313e-16,
+        0,
+        0,
+        0.1,
+        0,
+        1
+      ],
+      "name": "Plane",
+      "mesh": 2
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08,
+        4,
+        1
+      ],
+      "name": "Box",
+      "mesh": 3
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08,
+        2,
+        1
+      ],
+      "name": "Box",
+      "mesh": 4
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08242295510040176,
+        -4,
+        1
+      ],
+      "name": "Box",
+      "mesh": 1
+    },
+    {
+      "matrix": [
+        2.220446049250313e-16,
+        0,
+        -1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        2.220446049250313e-16,
+        0,
+        18,
+        0,
+        0,
+        1
+      ],
+      "name": "Road",
+      "children": [
+        65,
+        66,
+        67,
+        68,
+        69,
+        70
+      ]
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08242295510040176,
+        -2,
+        1
+      ],
+      "name": "Box",
+      "mesh": 1
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08242295510040176,
+        0,
+        1
+      ],
+      "name": "Box",
+      "mesh": 1
+    },
+    {
+      "matrix": [
+        6,
+        0,
+        0,
+        0,
+        0,
+        2.220446049250313e-15,
+        -10,
+        0,
+        0,
+        1,
+        2.220446049250313e-16,
+        0,
+        0,
+        0.1,
+        0,
+        1
+      ],
+      "name": "Plane",
+      "mesh": 2
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08,
+        4,
+        1
+      ],
+      "name": "Box",
+      "mesh": 3
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08,
+        2,
+        1
+      ],
+      "name": "Box",
+      "mesh": 4
+    },
+    {
+      "matrix": [
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.08242295510040176,
+        -4,
+        1
+      ],
+      "name": "Box",
+      "mesh": 1
+    },
+    {
+      "matrix": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        18,
+        1
+      ],
+      "name": "Road",
+      "children": [
+        72,
+        73,
+        74,
+        75,
+        76,
+        77
+      ]
+    },
+    {
+      "matrix": [
+        60.75754255150934,
+        0,
+        0,
+        0,
+        0,
+        2.220446049250313e-15,
+        -10,
+        0,
+        0,
+        1,
+        2.220446049250313e-16,
+        0,
+        0,
+        0.05,
+        0,
+        1
+      ],
+      "name": "Plane",
+      "mesh": 5
+    },
+    {
+      "matrix": [
+        6.745442266032835e-15,
+        3.0354490197147754e-14,
+        60.75754255150934,
+        0,
+        10,
+        1.1102230246251565e-15,
+        -5.551115123125783e-16,
+        0,
+        -5.551115123125783e-17,
+        1,
+        -4.440892098500626e-16,
+        0,
+        0,
+        0.05,
+        0,
+        1
+      ],
+      "name": "Plane",
+      "mesh": 5
+    },
+    {
+      "matrix": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -0.02,
+        4.125675867586679,
+        0,
+        1
+      ],
+      "name": "AmbientLight"
+    },
+    {
+      "matrix": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -7.140417065978216,
+        30.09104210735218,
+        43.3612603466221,
+        1
+      ],
+      "name": "DirectionalLight",
+      "extensions": {
+        "KHR_lights_punctual": {
+          "light": 0
+        }
+      }
+    },
+    {
+      "matrix": [
+        9,
+        0,
+        0,
+        0,
+        0,
+        13,
+        0,
+        0,
+        0,
+        0,
+        7.5,
+        0,
+        11.5,
+        6.5,
+        20,
+        1
+      ],
+      "name": "Building small",
+      "mesh": 6
+    },
+    {
+      "matrix": [
+        9,
+        0,
+        0,
+        0,
+        0,
+        10,
+        0,
+        0,
+        0,
+        0,
+        8,
+        0,
+        11.5,
+        5,
+        10.6,
+        1
+      ],
+      "name": "Building small",
+      "mesh": 7
+    },
+    {
+      "name": "Group",
+      "children": [
+        83,
+        84
+      ]
+    },
+    {
+      "matrix": [
+        9,
+        0,
+        0,
+        0,
+        0,
+        13,
+        0,
+        0,
+        0,
+        0,
+        7.5,
+        0,
+        11.5,
+        6.5,
+        20,
+        1
+      ],
+      "name": "Building small",
+      "mesh": 6
+    },
+    {
+      "matrix": [
+        9,
+        0,
+        0,
+        0,
+        0,
+        10,
+        0,
+        0,
+        0,
+        0,
+        8,
+        0,
+        11.5,
+        5,
+        10.6,
+        1
+      ],
+      "name": "Building small",
+      "mesh": 7
+    },
+    {
+      "matrix": [
+        -1,
+        1.2246467991473532e-16,
+        1.4997597826618576e-32,
+        0,
+        1.2246467991473532e-16,
+        1,
+        1.2246467991473532e-16,
+        0,
+        0,
+        1.2246467991473532e-16,
+        -1,
+        0,
+        33,
+        0,
+        32,
+        1
+      ],
+      "name": "Group",
+      "children": [
+        86,
+        87
+      ]
+    },
+    {
+      "matrix": [
+        8,
+        0,
+        0,
+        0,
+        0,
+        12,
+        0,
+        0,
+        0,
+        0,
+        6.5,
+        0,
+        11.5,
+        6,
+        -10,
+        1
+      ],
+      "name": "Building small",
+      "mesh": 7
+    },
+    {
+      "matrix": [
+        9,
+        0,
+        0,
+        0,
+        0,
+        10,
+        0,
+        0,
+        0,
+        0,
+        8,
+        0,
+        22,
+        5,
+        -11,
+        1
+      ],
+      "name": "Building small",
+      "mesh": 7
+    },
+    {
+      "matrix": [
+        6,
+        0,
+        0,
+        0,
+        0,
+        13,
+        0,
+        0,
+        0,
+        0,
+        9,
+        0,
+        11,
+        6.5,
+        -22,
+        1
+      ],
+      "name": "Building small",
+      "mesh": 6
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 48,
+      "target": 34962,
+      "byteStride": 12
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 48,
+      "byteLength": 48,
+      "target": 34962,
+      "byteStride": 12
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 96,
+      "byteLength": 32,
+      "target": 34962,
+      "byteStride": 8
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 128,
+      "byteLength": 12,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 140,
+      "byteLength": 288,
+      "target": 34962,
+      "byteStride": 12
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 428,
+      "byteLength": 288,
+      "target": 34962,
+      "byteStride": 12
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 716,
+      "byteLength": 192,
+      "target": 34962,
+      "byteStride": 8
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 908,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 980,
+      "byteLength": 48,
+      "target": 34962,
+      "byteStride": 12
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1028,
+      "byteLength": 48,
+      "target": 34962,
+      "byteStride": 12
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1076,
+      "byteLength": 32,
+      "target": 34962,
+      "byteStride": 8
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1108,
+      "byteLength": 12,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1120,
+      "byteLength": 288,
+      "target": 34962,
+      "byteStride": 12
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1408,
+      "byteLength": 288,
+      "target": 34962,
+      "byteStride": 12
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1696,
+      "byteLength": 192,
+      "target": 34962,
+      "byteStride": 8
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1888,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1960,
+      "byteLength": 288,
+      "target": 34962,
+      "byteStride": 12
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 2248,
+      "byteLength": 288,
+      "target": 34962,
+      "byteStride": 12
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 2536,
+      "byteLength": 192,
+      "target": 34962,
+      "byteStride": 8
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 2728,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 2800,
+      "byteLength": 288,
+      "target": 34962,
+      "byteStride": 12
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 3088,
+      "byteLength": 288,
+      "target": 34962,
+      "byteStride": 12
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 3376,
+      "byteLength": 192,
+      "target": 34962,
+      "byteStride": 8
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 3568,
+      "byteLength": 72,
+      "target": 34963
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 3640,
+      "uri": "data:application/octet-stream;base64,AAAAvwAAAD8AAAAAAAAAPwAAAD8AAAAAAAAAvwAAAL8AAAAAAAAAPwAAAL8AAAAAAAAAAAAAAAAAAIA/AAAAAAAAAAAAAIA/AAAAAAAAAAAAAIA/AAAAAAAAAAAAAIA/AAAAAAAAgD8AAIA/AACAPwAAAAAAAAAAAACAPwAAAAAAAAIAAQACAAMAAQAAAAA/AAAAPwAAAD8AAAA/AAAAPwAAAL8AAAA/AAAAvwAAAD8AAAA/AAAAvwAAAL8AAAC/AAAAPwAAAL8AAAC/AAAAPwAAAD8AAAC/AAAAvwAAAL8AAAC/AAAAvwAAAD8AAAC/AAAAPwAAAL8AAAA/AAAAPwAAAL8AAAC/AAAAPwAAAD8AAAA/AAAAPwAAAD8AAAC/AAAAvwAAAD8AAAA/AAAAvwAAAD8AAAC/AAAAvwAAAL8AAAA/AAAAvwAAAL8AAAC/AAAAPwAAAD8AAAA/AAAAPwAAAD8AAAC/AAAAvwAAAD8AAAA/AAAAvwAAAD8AAAA/AAAAPwAAAL8AAAC/AAAAPwAAAL8AAAA/AAAAvwAAAL8AAAC/AAAAvwAAAL8AAIA/AAAAAAAAAAAAAIA/AAAAAAAAAAAAAIA/AAAAAAAAAAAAAIA/AAAAAAAAAAAAAIC/AAAAAAAAAAAAAIC/AAAAAAAAAAAAAIC/AAAAAAAAAAAAAIC/AAAAAAAAAAAAAAAAAACAPwAAAAAAAAAAAACAPwAAAAAAAAAAAACAPwAAAAAAAAAAAACAPwAAAAAAAAAAAACAvwAAAAAAAAAAAACAvwAAAAAAAAAAAACAvwAAAAAAAAAAAACAvwAAAAAAAAAAAAAAAAAAgD8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAgL8AAAAAAAAAAAAAgL8AAAAAAAAAAAAAgL8AAAAAAAAAAAAAgL8AAAAAAACAPwAAgD8AAIA/AAAAAAAAAAAAAIA/AAAAAAAAAAAAAIA/AACAPwAAgD8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAgD8AAIA/AACAPwAAAAAAAAAAAACAPwAAAAAAAAAAAACAPwAAgD8AAIA/AAAAAAAAAAAAAIA/AAAAAAAAAAAAAIA/AACAPwAAgD8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAgD8AAIA/AACAPwAAAAAAAAAAAACAPwAAAAAAAAIAAQACAAMAAQAEAAYABQAGAAcABQAIAAoACQAKAAsACQAMAA4ADQAOAA8ADQAQABIAEQASABMAEQAUABYAFQAWABcAFQAAAAC/AAAAPwAAAAAAAAA/AAAAPwAAAAAAAAC/AAAAvwAAAAAAAAA/AAAAvwAAAAAAAAAAAAAAAAAAgD8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAgD8AAAAAAACAPwAAgD8AAIA/AAAAAAAAAAAAAIA/AAAAAAAAAgABAAIAAwABAAAAAD8AAAA/AAAAPwAAAD8AAAA/AAAAvwAAAD8AAAC/AAAAPwAAAD8AAAC/AAAAvwAAAL8AAAA/AAAAvwAAAL8AAAA/AAAAPwAAAL8AAAC/AAAAvwAAAL8AAAC/AAAAPwAAAL8AAAA/AAAAvwAAAD8AAAA/AAAAvwAAAL8AAAA/AAAAPwAAAD8AAAA/AAAAPwAAAL8AAAC/AAAAPwAAAD8AAAC/AAAAPwAAAL8AAAC/AAAAvwAAAD8AAAC/AAAAvwAAAL8AAAA/AAAAPwAAAD8AAAA/AAAAPwAAAL8AAAC/AAAAPwAAAD8AAAC/AAAAPwAAAD8AAAA/AAAAvwAAAL8AAAA/AAAAvwAAAD8AAAC/AAAAvwAAAL8AAAC/AAAAvwAAgD8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAgL8AAAAAAAAAAAAAgL8AAAAAAAAAAAAAgL8AAAAAAAAAAAAAgL8AAAAAAAAAAAAAAAAAAIA/AAAAAAAAAAAAAIA/AAAAAAAAAAAAAIA/AAAAAAAAAAAAAIA/AAAAAAAAAAAAAIC/AAAAAAAAAAAAAIC/AAAAAAAAAAAAAIC/AAAAAAAAAAAAAIC/AAAAAAAAAAAAAAAAAACAPwAAAAAAAAAAAACAPwAAAAAAAAAAAACAPwAAAAAAAAAAAACAPwAAAAAAAAAAAACAvwAAAAAAAAAAAACAvwAAAAAAAAAAAACAvwAAAAAAAAAAAACAvwAAAAAAAIA/AACAPwAAgD8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAgD8AAIA/AACAPwAAAAAAAAAAAACAPwAAAAAAAAAAAACAPwAAgD8AAIA/AAAAAAAAAAAAAIA/AAAAAAAAAAAAAIA/AACAPwAAgD8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAgD8AAIA/AACAPwAAAAAAAAAAAACAPwAAAAAAAAAAAACAPwAAgD8AAIA/AAAAAAAAAAAAAIA/AAAAAAAAAgABAAIAAwABAAQABgAFAAYABwAFAAgACgAJAAoACwAJAAwADgANAA4ADwANABAAEgARABIAEwARABQAFgAVABYAFwAVAAAAAD8AAAA/AAAAPwAAAD8AAAA/AAAAvwAAAD8AAAC/AAAAPwAAAD8AAAC/AAAAvwAAAL8AAAA/AAAAvwAAAL8AAAA/AAAAPwAAAL8AAAC/AAAAvwAAAL8AAAC/AAAAPwAAAL8AAAA/AAAAvwAAAD8AAAA/AAAAvwAAAL8AAAA/AAAAPwAAAD8AAAA/AAAAPwAAAL8AAAC/AAAAPwAAAD8AAAC/AAAAPwAAAL8AAAC/AAAAvwAAAD8AAAC/AAAAvwAAAL8AAAA/AAAAPwAAAD8AAAA/AAAAPwAAAL8AAAC/AAAAPwAAAD8AAAC/AAAAPwAAAD8AAAA/AAAAvwAAAL8AAAA/AAAAvwAAAD8AAAC/AAAAvwAAAL8AAAC/AAAAvwAAgD8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAgL8AAAAAAAAAAAAAgL8AAAAAAAAAAAAAgL8AAAAAAAAAAAAAgL8AAAAAAAAAAAAAAAAAAIA/AAAAAAAAAAAAAIA/AAAAAAAAAAAAAIA/AAAAAAAAAAAAAIA/AAAAAAAAAAAAAIC/AAAAAAAAAAAAAIC/AAAAAAAAAAAAAIC/AAAAAAAAAAAAAIC/AAAAAAAAAAAAAAAAAACAPwAAAAAAAAAAAACAPwAAAAAAAAAAAACAPwAAAAAAAAAAAACAPwAAAAAAAAAAAACAvwAAAAAAAAAAAACAvwAAAAAAAAAAAACAvwAAAAAAAAAAAACAvwAAAAAAAIA/AACAPwAAgD8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAgD8AAIA/AACAPwAAAAAAAAAAAACAPwAAAAAAAAAAAACAPwAAgD8AAIA/AAAAAAAAAAAAAIA/AAAAAAAAAAAAAIA/AACAPwAAgD8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAgD8AAIA/AACAPwAAAAAAAAAAAACAPwAAAAAAAAAAAACAPwAAgD8AAIA/AAAAAAAAAAAAAIA/AAAAAAAAAgABAAIAAwABAAQABgAFAAYABwAFAAgACgAJAAoACwAJAAwADgANAA4ADwANABAAEgARABIAEwARABQAFgAVABYAFwAVAAAAAD8AAAA/AAAAPwAAAD8AAAA/AAAAvwAAAD8AAAC/AAAAPwAAAD8AAAC/AAAAvwAAAL8AAAA/AAAAvwAAAL8AAAA/AAAAPwAAAL8AAAC/AAAAvwAAAL8AAAC/AAAAPwAAAL8AAAA/AAAAvwAAAD8AAAA/AAAAvwAAAL8AAAA/AAAAPwAAAD8AAAA/AAAAPwAAAL8AAAC/AAAAPwAAAD8AAAC/AAAAPwAAAL8AAAC/AAAAvwAAAD8AAAC/AAAAvwAAAL8AAAA/AAAAPwAAAD8AAAA/AAAAPwAAAL8AAAC/AAAAPwAAAD8AAAC/AAAAPwAAAD8AAAA/AAAAvwAAAL8AAAA/AAAAvwAAAD8AAAC/AAAAvwAAAL8AAAC/AAAAvwAAgD8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAgL8AAAAAAAAAAAAAgL8AAAAAAAAAAAAAgL8AAAAAAAAAAAAAgL8AAAAAAAAAAAAAAAAAAIA/AAAAAAAAAAAAAIA/AAAAAAAAAAAAAIA/AAAAAAAAAAAAAIA/AAAAAAAAAAAAAIC/AAAAAAAAAAAAAIC/AAAAAAAAAAAAAIC/AAAAAAAAAAAAAIC/AAAAAAAAAAAAAAAAAACAPwAAAAAAAAAAAACAPwAAAAAAAAAAAACAPwAAAAAAAAAAAACAPwAAAAAAAAAAAACAvwAAAAAAAAAAAACAvwAAAAAAAAAAAACAvwAAAAAAAAAAAACAvwAAAAAAAIA/AACAPwAAgD8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAgD8AAIA/AACAPwAAAAAAAAAAAACAPwAAAAAAAAAAAACAPwAAgD8AAIA/AAAAAAAAAAAAAIA/AAAAAAAAAAAAAIA/AACAPwAAgD8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAgD8AAIA/AACAPwAAAAAAAAAAAACAPwAAAAAAAAAAAACAPwAAgD8AAIA/AAAAAAAAAAAAAIA/AAAAAAAAAgABAAIAAwABAAQABgAFAAYABwAFAAgACgAJAAoACwAJAAwADgANAA4ADwANABAAEgARABIAEwARABQAFgAVABYAFwAVAA=="
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 4,
+      "max": [
+        0.5,
+        0.5,
+        0
+      ],
+      "min": [
+        -0.5,
+        -0.5,
+        0
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 4,
+      "max": [
+        0,
+        0,
+        1
+      ],
+      "min": [
+        0,
+        0,
+        1
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 4,
+      "max": [
+        1,
+        1
+      ],
+      "min": [
+        0,
+        0
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 3,
+      "componentType": 5123,
+      "count": 6,
+      "max": [
+        3
+      ],
+      "min": [
+        0
+      ],
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 4,
+      "componentType": 5126,
+      "count": 24,
+      "max": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "min": [
+        -0.5,
+        -0.5,
+        -0.5
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 5,
+      "componentType": 5126,
+      "count": 24,
+      "max": [
+        1,
+        1,
+        1
+      ],
+      "min": [
+        -1,
+        -1,
+        -1
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 6,
+      "componentType": 5126,
+      "count": 24,
+      "max": [
+        1,
+        1
+      ],
+      "min": [
+        0,
+        0
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 7,
+      "componentType": 5123,
+      "count": 36,
+      "max": [
+        23
+      ],
+      "min": [
+        0
+      ],
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 8,
+      "componentType": 5126,
+      "count": 4,
+      "max": [
+        0.5,
+        0.5,
+        0
+      ],
+      "min": [
+        -0.5,
+        -0.5,
+        0
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 9,
+      "componentType": 5126,
+      "count": 4,
+      "max": [
+        0,
+        0,
+        1
+      ],
+      "min": [
+        0,
+        0,
+        1
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 10,
+      "componentType": 5126,
+      "count": 4,
+      "max": [
+        1,
+        1
+      ],
+      "min": [
+        0,
+        0
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 11,
+      "componentType": 5123,
+      "count": 6,
+      "max": [
+        3
+      ],
+      "min": [
+        0
+      ],
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 12,
+      "componentType": 5126,
+      "count": 24,
+      "max": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "min": [
+        -0.5,
+        -0.5,
+        -0.5
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 13,
+      "componentType": 5126,
+      "count": 24,
+      "max": [
+        1,
+        1,
+        1
+      ],
+      "min": [
+        -1,
+        -1,
+        -1
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 14,
+      "componentType": 5126,
+      "count": 24,
+      "max": [
+        1,
+        1
+      ],
+      "min": [
+        0,
+        0
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 15,
+      "componentType": 5123,
+      "count": 36,
+      "max": [
+        23
+      ],
+      "min": [
+        0
+      ],
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 16,
+      "componentType": 5126,
+      "count": 24,
+      "max": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "min": [
+        -0.5,
+        -0.5,
+        -0.5
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 17,
+      "componentType": 5126,
+      "count": 24,
+      "max": [
+        1,
+        1,
+        1
+      ],
+      "min": [
+        -1,
+        -1,
+        -1
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 18,
+      "componentType": 5126,
+      "count": 24,
+      "max": [
+        1,
+        1
+      ],
+      "min": [
+        0,
+        0
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 19,
+      "componentType": 5123,
+      "count": 36,
+      "max": [
+        23
+      ],
+      "min": [
+        0
+      ],
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 20,
+      "componentType": 5126,
+      "count": 24,
+      "max": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "min": [
+        -0.5,
+        -0.5,
+        -0.5
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 21,
+      "componentType": 5126,
+      "count": 24,
+      "max": [
+        1,
+        1,
+        1
+      ],
+      "min": [
+        -1,
+        -1,
+        -1
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 22,
+      "componentType": 5126,
+      "count": 24,
+      "max": [
+        1,
+        1
+      ],
+      "min": [
+        0,
+        0
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 23,
+      "componentType": 5123,
+      "count": 36,
+      "max": [
+        23
+      ],
+      "min": [
+        0
+      ],
+      "type": "SCALAR"
+    }
+  ],
+  "materials": [
+    {
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.008023192982520563,
+          0.25818285291079235,
+          0.008023192982520563,
+          1
+        ],
+        "metallicFactor": 0,
+        "roughnessFactor": 0.9
+      },
+      "extensions": {
+        "KHR_materials_unlit": {}
+      }
+    },
+    {
+      "pbrMetallicRoughness": {
+        "metallicFactor": 0,
+        "roughnessFactor": 1
+      },
+      "emissiveFactor": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.09758734713304495,
+          0.09305896283800832,
+          0.09305896283800832,
+          1
+        ],
+        "metallicFactor": 0,
+        "roughnessFactor": 1
+      },
+      "emissiveFactor": [
+        0.015208514418949472,
+        0.015208514418949472,
+        0.015208514418949472
+      ]
+    },
+    {
+      "pbrMetallicRoughness": {
+        "metallicFactor": 0,
+        "roughnessFactor": 1
+      },
+      "emissiveFactor": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "pbrMetallicRoughness": {
+        "metallicFactor": 0,
+        "roughnessFactor": 1
+      },
+      "emissiveFactor": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.02732089163382382,
+          0.02732089163382382,
+          0.02732089163382382,
+          1
+        ],
+        "metallicFactor": 0,
+        "roughnessFactor": 0.9
+      },
+      "extensions": {
+        "KHR_materials_unlit": {}
+      }
+    },
+    {
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.09758734713304495,
+          0.09758734713304495,
+          0.09758734713304495,
+          1
+        ],
+        "metallicFactor": 0,
+        "roughnessFactor": 1
+      }
+    },
+    {
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.09758734713304495,
+          0.09758734713304495,
+          0.09758734713304495,
+          1
+        ],
+        "metallicFactor": 0,
+        "roughnessFactor": 1
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "primitives": [
+        {
+          "mode": 4,
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1,
+            "TEXCOORD_0": 2
+          },
+          "indices": 3,
+          "material": 0
+        }
+      ]
+    },
+    {
+      "primitives": [
+        {
+          "mode": 4,
+          "attributes": {
+            "POSITION": 4,
+            "NORMAL": 5,
+            "TEXCOORD_0": 6
+          },
+          "indices": 7,
+          "material": 1
+        }
+      ]
+    },
+    {
+      "primitives": [
+        {
+          "mode": 4,
+          "attributes": {
+            "POSITION": 8,
+            "NORMAL": 9,
+            "TEXCOORD_0": 10
+          },
+          "indices": 11,
+          "material": 2
+        }
+      ]
+    },
+    {
+      "primitives": [
+        {
+          "mode": 4,
+          "attributes": {
+            "POSITION": 12,
+            "NORMAL": 13,
+            "TEXCOORD_0": 14
+          },
+          "indices": 15,
+          "material": 3
+        }
+      ]
+    },
+    {
+      "primitives": [
+        {
+          "mode": 4,
+          "attributes": {
+            "POSITION": 16,
+            "NORMAL": 17,
+            "TEXCOORD_0": 18
+          },
+          "indices": 19,
+          "material": 4
+        }
+      ]
+    },
+    {
+      "primitives": [
+        {
+          "mode": 4,
+          "attributes": {
+            "POSITION": 8,
+            "NORMAL": 9,
+            "TEXCOORD_0": 10
+          },
+          "indices": 11,
+          "material": 5
+        }
+      ]
+    },
+    {
+      "primitives": [
+        {
+          "mode": 4,
+          "attributes": {
+            "POSITION": 20,
+            "NORMAL": 21,
+            "TEXCOORD_0": 22
+          },
+          "indices": 23,
+          "material": 6
+        }
+      ]
+    },
+    {
+      "primitives": [
+        {
+          "mode": 4,
+          "attributes": {
+            "POSITION": 20,
+            "NORMAL": 21,
+            "TEXCOORD_0": 22
+          },
+          "indices": 23,
+          "material": 7
+        }
+      ]
+    }
+  ],
+  "extensions": {
+    "KHR_lights_punctual": {
+      "lights": [
+        {
+          "name": "DirectionalLight",
+          "color": [
+            1,
+            1,
+            1
+          ],
+          "intensity": 1,
+          "type": "directional"
+        }
+      ]
+    }
+  },
+  "extensionsUsed": [
+    "KHR_materials_unlit",
+    "KHR_lights_punctual"
+  ]
+}

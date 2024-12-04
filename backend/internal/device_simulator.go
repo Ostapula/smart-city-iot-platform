@@ -26,7 +26,7 @@ func simulateDevices(client mqtt.Client) {
 			}
 			payload, _ := json.Marshal(data)
 			client.Publish("smartcity/traffic", 0, false, payload)
-			time.Sleep(1 * time.Second)
+			time.Sleep(3 * time.Second)
 		}
 	}()
 
