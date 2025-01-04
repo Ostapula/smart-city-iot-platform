@@ -122,7 +122,7 @@ func (sm *SensorManager) updateSensors() {
 			CarIDs:      sensor.CarsOnSensor,
 			WaitTime:    sensor.WaitTime,
 		}
-		fmt.Println(msg)
+		//fmt.Println(msg)
 		payload, _ := json.Marshal(msg)
 		topic := "smartcity/sensors/" + fmt.Sprint(sensor.Index)
 		sm.mqttClient.Publish(topic, 0, false, payload)

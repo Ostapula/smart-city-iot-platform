@@ -33,11 +33,50 @@ type TrafficLight struct {
 	State string `json:"state"` // "red" or "green"
 }
 
+// Define phases: For a simple intersection, we have two phases:
+//   - Phase 0: North-South traffic lights (indexes 0 and 1) green, East-West (2 and 3) red
+//   - Phase 1: East-West traffic lights (2 and 3) green, North-South (0 and 1) red
+type Phase struct {
+	GreenLights []int
+}
+
+// IntersectionState tracks the current phase and timing
+type IntersectionState struct {
+	CurrentPhase int
+	TimeInPhase  float64
+	MinGreen     float64
+	MaxGreen     float64
+	YellowTime   float64
+	TimeInYellow float64
+	InYellow     bool
+}
+
+// Define our two-phase system for a 4-approach intersection:
+var phases = []Phase{
+	{GreenLights: []int{0, 1}}, // North & South
+	{GreenLights: []int{2, 3}}, // East & West
+}
+
+var intersectionState = IntersectionState{
+	CurrentPhase: 0,
+	// You can tweak these times to suit your simulation:
+	MinGreen:   4.0,  // minimum 4s of green
+	MaxGreen:   10.0, // maximum 10s of green if demand is high
+	YellowTime: 3.0,  // 2s of yellow before switching
+	InYellow:   false,
+}
+
+// We'll store the "demand" from sensors for each phase
+// demand[0] => total demand on North-South
+// demand[1] => total demand on East-West
+var demand = []float64{0, 0}
+
 var upgrader = websocket.Upgrader{}
 var clients = make(map[*websocket.Conn]bool)
 var clientsMutex = sync.Mutex{}
 var broadcast = make(chan []byte)
-var timeSinceLastChange = 0.0
+
+//var timeSinceLastChange = 0.0
 
 var trafficLights = []TrafficLight{
 	{Index: 0, State: "red"},
@@ -68,6 +107,30 @@ var cars = []sensor.CarData{
 	{
 		ID:        "car4",
 		Position:  sensor.Vector3{X: 50, Y: 0.25, Z: -2},
+		Direction: sensor.Vector3{X: -1, Y: 0, Z: 0},
+		Speed:     3,
+	},
+	{
+		ID:        "car5",
+		Position:  sensor.Vector3{X: -2, Y: 0.25, Z: -59},
+		Direction: sensor.Vector3{X: 0, Y: 0, Z: 1},
+		Speed:     3,
+	},
+	{
+		ID:        "car5",
+		Position:  sensor.Vector3{X: 2, Y: 0.25, Z: 59},
+		Direction: sensor.Vector3{X: 0, Y: 0, Z: -1},
+		Speed:     3,
+	},
+	{
+		ID:        "car7",
+		Position:  sensor.Vector3{X: -59, Y: 0.25, Z: 2},
+		Direction: sensor.Vector3{X: 1, Y: 0, Z: 0},
+		Speed:     3,
+	},
+	{
+		ID:        "car8",
+		Position:  sensor.Vector3{X: 59, Y: 0.25, Z: -2},
 		Direction: sensor.Vector3{X: -1, Y: 0, Z: 0},
 		Speed:     3,
 	},
@@ -142,10 +205,15 @@ func simulateTrafficFlow() {
 		broadcast <- msg
 	}
 }
+
 func updateCarPositions(deltaTime float64) {
+	//log.Println(cars)
 	for i := range cars {
 		car := &cars[i]
 		canMove := true
+
+		// TODO: check for the car in front
+		canMove = isCarShouldStop(*car)
 
 		trafficLightIndex := getRelevantTrafficLight(*car)
 		if trafficLightIndex != -1 {
@@ -154,7 +222,7 @@ func updateCarPositions(deltaTime float64) {
 				stopZone := getStopZoneForLight(light.Index)
 				if isCarApproachingStopZone(*car, stopZone) {
 					canMove = false
-					fmt.Println(car.ID, car.Direction.X, car.Direction.Y, car.Direction.Z, trafficLightIndex, stopZone, canMove)
+					//log.Println(car.ID, car.Direction.X, car.Direction.Y, car.Direction.Z, trafficLightIndex, stopZone, canMove)
 				}
 			}
 		}
@@ -168,8 +236,8 @@ func updateCarPositions(deltaTime float64) {
 
 	for i := range cars {
 		car := &cars[i]
-		if math.Abs(car.Position.X) > 51 || math.Abs(car.Position.Z) > 51 {
-			fmt.Printf("Befor reset x: %v | z: %v- \n ", car.Position.X, car.Position.Z)
+		if math.Abs(car.Position.X) > 60 || math.Abs(car.Position.Z) > 60 {
+			//log.Printf("Befor reset x: %v | z: %v- \n ", car.Position.X, car.Position.Z)
 			if car.Direction.Z != 0 {
 				car.Position.Z = car.Position.Z * -1
 			} else if car.Direction.X != 0 {
@@ -178,40 +246,124 @@ func updateCarPositions(deltaTime float64) {
 				car.Position.X = car.Position.X * -1
 				car.Position.Z = car.Position.Z * -1
 			}
-			fmt.Printf("After reset x: %v | z: %v- \n ", car.Position.X, car.Position.Z)
+			//log.Printf("After reset x: %v | z: %v- \n ", car.Position.X, car.Position.Z)
 		}
 	}
 }
 
+// func updateTrafficLights(deltaTime float64) {
+// 	timeSinceLastChange += deltaTime
+// 	maxWaitTime := 0.0
+// 	maxCars := 0
+// 	sensorIndexToGreen := -1
+
+// 	sensorDataMutex.Lock()
+// 	for _, data := range sensorData {
+// 		numCars := len(data.CarIDs)
+// 		if numCars > 0 {
+// 			if data.WaitTime > maxWaitTime || (data.WaitTime == maxWaitTime && numCars > maxCars) {
+// 				maxWaitTime = data.WaitTime
+// 				maxCars = numCars
+// 				sensorIndexToGreen = data.SensorIndex
+// 			}
+// 		}
+// 	}
+// 	sensorDataMutex.Unlock()
+
+//		if timeSinceLastChange >= 6.0 && sensorIndexToGreen != -1 {
+//			for i := range trafficLights {
+//				if trafficLights[i].Index == sensorIndexToGreen {
+//					trafficLights[i].State = "green"
+//				} else {
+//					trafficLights[i].State = "red"
+//				}
+//			}
+//			timeSinceLastChange = 0.0
+//		}
+//	}
 func updateTrafficLights(deltaTime float64) {
-	timeSinceLastChange += deltaTime
-	maxWaitTime := 0.0
-	maxCars := 0
-	sensorIndexToGreen := -1
+	// 1. Update how long we've been in the current phase (or yellow)
+	if intersectionState.InYellow {
+		intersectionState.TimeInYellow += deltaTime
+		// Check if yellow time is over
+		if intersectionState.TimeInYellow >= intersectionState.YellowTime {
+			// Switch phase
+			intersectionState.InYellow = false
+			intersectionState.TimeInYellow = 0
+			switchPhase()
+		}
+		return
+	} else {
+		intersectionState.TimeInPhase += deltaTime
+	}
 
-	sensorDataMutex.Lock()
-	for _, data := range sensorData {
-		numCars := len(data.CarIDs)
-		if numCars > 0 {
-			if data.WaitTime > maxWaitTime || (data.WaitTime == maxWaitTime && numCars > maxCars) {
-				maxWaitTime = data.WaitTime
-				maxCars = numCars
-				sensorIndexToGreen = data.SensorIndex
-			}
+	// 2. Calculate demand from sensors
+	calculateDemand()
+
+	// 3. Decide if we can extend green or if we must switch to yellow
+	//    - If below MinGreen, stay in green
+	//    - If above MaxGreen or demand is higher in the other phase, switch
+
+	if intersectionState.TimeInPhase < intersectionState.MinGreen {
+		// Don't switch if we haven't met the minimum green
+		return
+	}
+
+	// If we've surpassed MaxGreen, time to switch
+	if intersectionState.TimeInPhase >= intersectionState.MaxGreen {
+		triggerYellow()
+		return
+	}
+
+	// If the other phase's demand is significantly higher, trigger yellow
+	// (You can tune this condition or add thresholds)
+	currentDemand := demand[intersectionState.CurrentPhase]
+	otherPhase := (intersectionState.CurrentPhase + 1) % len(phases)
+	if demand[otherPhase] > currentDemand*1.2 {
+		// If the other phase's demand is 20% higher, switch
+		triggerYellow()
+		return
+	}
+}
+
+// Trigger the yellow phase
+func triggerYellow() {
+	intersectionState.InYellow = true
+	intersectionState.TimeInYellow = 0.0
+	// Set all lights in the current phase to yellow, others to red
+	for i := range trafficLights {
+		if inCurrentPhase(i) {
+			trafficLights[i].State = "yellow"
+		} else {
+			trafficLights[i].State = "red"
 		}
 	}
-	sensorDataMutex.Unlock()
+}
 
-	if timeSinceLastChange >= 6.0 && sensorIndexToGreen != -1 {
-		for i := range trafficLights {
-			if trafficLights[i].Index == sensorIndexToGreen {
-				trafficLights[i].State = "green"
-			} else {
-				trafficLights[i].State = "red"
-			}
+// Actually switch to the next phase after yellow completes
+func switchPhase() {
+	// Move to the next phase
+	intersectionState.CurrentPhase = (intersectionState.CurrentPhase + 1) % len(phases)
+	intersectionState.TimeInPhase = 0.0
+
+	// Update traffic lights: the new phase’s lights go green, others go red
+	for i := range trafficLights {
+		if inCurrentPhase(i) {
+			trafficLights[i].State = "green"
+		} else {
+			trafficLights[i].State = "red"
 		}
-		timeSinceLastChange = 0.0
 	}
+}
+
+// Helper function to check if a traffic light index belongs to the current phase
+func inCurrentPhase(lightIndex int) bool {
+	for _, idx := range phases[intersectionState.CurrentPhase].GreenLights {
+		if idx == lightIndex {
+			return true
+		}
+	}
+	return false
 }
 
 func getStopZoneForLight(lightIndex int) Vector3 {
@@ -239,10 +391,31 @@ func isCarApproachingStopZone(car sensor.CarData, stopZone Vector3) bool {
 	projection := dx*car.Direction.X + dy*car.Direction.Y + dz*car.Direction.Z
 
 	if projection > 0 && projection < threshold {
-		fmt.Printf("Aproaching stop zone: %v | %v ", projection > 0, projection < threshold)
+		//log.Printf("Aproaching stop zone: %v | %v ", projection > 0, projection < threshold)
 		return true
 	}
 	return false
+}
+
+func isCarShouldStop(car sensor.CarData) bool {
+	threshold := 4.5
+	for i := range cars {
+		car2 := &cars[i]
+		if car2 != &car && car.Direction == car2.Direction {
+			dx := car2.Position.X - car.Position.X
+			dy := car2.Position.Y - car.Position.Y
+			dz := car2.Position.Z - car.Position.Z
+
+			projection := dx*car.Direction.X + dy*car.Direction.Y + dz*car.Direction.Z
+			if projection > 0 && projection < threshold {
+				//log.Printf("Aproaching stop zone: %v | %v ", projection > 0, projection < threshold)
+				return false
+			}
+			return true
+		}
+	}
+
+	return true
 }
 
 func getRelevantTrafficLight(car sensor.CarData) int {
@@ -299,5 +472,31 @@ func handleMessages() {
 			}
 		}
 		clientsMutex.Unlock()
+	}
+}
+
+func calculateDemand() {
+	// Reset
+	demand[0] = 0
+	demand[1] = 0
+
+	sensorDataMutex.Lock()
+	defer sensorDataMutex.Unlock()
+
+	// For a simple example, we combine wait time and number of cars
+	// to come up with a demand metric: demand = #cars * (wait time)
+	// You could also do a simpler or more advanced formula.
+	for _, data := range sensorData {
+		phaseIndex := -1
+		if data.SensorIndex == 0 || data.SensorIndex == 1 {
+			phaseIndex = 0 // North-South
+		} else if data.SensorIndex == 2 || data.SensorIndex == 3 {
+			phaseIndex = 1 // East-West
+		}
+		if phaseIndex != -1 {
+			// Example metric: (# cars) * (average wait time)
+			numCars := float64(len(data.CarIDs))
+			demand[phaseIndex] += numCars * data.WaitTime
+		}
 	}
 }

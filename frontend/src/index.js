@@ -68,6 +68,7 @@ function connectWebSocket() {
 function updateVisualization(data) {
     if (data.type === 'update') {
         if (data.cars !== undefined) {
+            //console.log(data);
             updateCars(data.cars);
         }
         if (data.trafficLights !== undefined) {
@@ -77,8 +78,10 @@ function updateVisualization(data) {
 }
 
 function updateCars(carDataList) {
+    let color = 0xff0000
     carDataList.forEach((carData) => {
         let car = cars.find(c => c.id === carData.id);
+        //console.log(car);
         if (car) {
             car.mesh.position.set(
                 carData.position.x,
@@ -91,8 +94,9 @@ function updateCars(carDataList) {
                 carData.direction.z
             );
         } else {
+            color *= 0x09
             const geometry = new THREE.BoxGeometry(1, 0.5, 2);
-            const material = new THREE.MeshLambertMaterial({ color: 0xff0000 });
+            const material = new THREE.MeshLambertMaterial({ color: color });
             const carMesh = new THREE.Mesh(geometry, material);
             carMesh.position.set(
                 carData.position.x,
@@ -139,6 +143,8 @@ function updateTrafficLights(trafficLightData) {
             } else if (lightData.state === 'green') {
                 greenLight.material.emissive.setHex(0x00ff00);
                 lightObj.state = 'green';
+            } else if (lightData.state === 'yellow') {
+                yellowLight.material.emissive.setHex(0xffff00);
             }
         }
     });
