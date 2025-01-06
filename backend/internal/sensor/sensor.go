@@ -48,10 +48,10 @@ type SensorManager struct {
 func NewSensorManager(broker string, cars *[]CarData) *SensorManager {
 	manager := &SensorManager{
 		sensors: []TrafficSensor{
-			{Index: 0, Position: Vector3{X: 6, Y: 0, Z: 12}},   // North
-			{Index: 1, Position: Vector3{X: -6, Y: 0, Z: -12}}, // South
-			{Index: 2, Position: Vector3{X: -12, Y: 0, Z: 6}},  // East
-			{Index: 3, Position: Vector3{X: 12, Y: 0, Z: -6}},  // West
+			{Index: 0, Position: Vector3{X: 3, Y: 0, Z: 13}},   // North
+			{Index: 1, Position: Vector3{X: -3, Y: 0, Z: -13}}, // South
+			{Index: 2, Position: Vector3{X: -13, Y: 0, Z: 3}},  // East
+			{Index: 3, Position: Vector3{X: 13, Y: 0, Z: -3}},  // West
 		},
 		cars:           *cars,
 		lastUpdate:     time.Now(),
@@ -87,28 +87,43 @@ func (sm *SensorManager) updateSensors() {
 	sm.carsMutex.Lock()
 	defer sm.carsMutex.Unlock()
 
+	// Clear out the old data
 	for i := range sm.sensors {
 		sm.sensors[i].CarsOnSensor = []string{}
 	}
 
-	sensorRadius := 5.0
+	// Instead of a single sensorRadius, we’ll define half-widths
+	// for each sensor’s rectangular bounding box:
+	//   - North/South sensors:  halfX = 2, halfZ = 5  (4×10 box)
+	//   - East/West sensors:    halfX = 5, halfZ = 2 (10×4 box)
 
 	for _, car := range sm.cars {
-		carPos := car.Position
 		for i := range sm.sensors {
 			sensor := &sm.sensors[i]
-			distance := math.Sqrt(
-				math.Pow(carPos.X-sensor.Position.X, 2) +
-					math.Pow(carPos.Y-sensor.Position.Y, 2) +
-					math.Pow(carPos.Z-sensor.Position.Z, 2),
-			)
-			if distance <= sensorRadius {
+
+			// Determine bounding box size by sensor index
+			var halfX, halfZ float64
+			if sensor.Index == 0 || sensor.Index == 1 {
+				// North / South
+				halfX = 2
+				halfZ = 5
+			} else {
+				// East / West
+				halfX = 5
+				halfZ = 2
+			}
+
+			// Check if car is within this rectangular area
+			// ignoring Y dimension (assuming it's approximately 0)
+			if math.Abs(car.Position.X-sensor.Position.X) <= halfX &&
+				math.Abs(car.Position.Z-sensor.Position.Z) <= halfZ {
 				sensor.CarsOnSensor = append(sensor.CarsOnSensor, car.ID)
 				sensor.WaitTime += deltaTime
 			}
 		}
 	}
 
+	// Reset wait time to 0 if no cars remain on sensor
 	for i := range sm.sensors {
 		sensor := &sm.sensors[i]
 		if len(sensor.CarsOnSensor) == 0 {
@@ -116,6 +131,7 @@ func (sm *SensorManager) updateSensors() {
 		}
 	}
 
+	// Publish sensor data over MQTT
 	for _, sensor := range sm.sensors {
 		msg := SensorDataMessage{
 			SensorIndex: sensor.Index,
@@ -126,11 +142,6 @@ func (sm *SensorManager) updateSensors() {
 		payload, _ := json.Marshal(msg)
 		topic := "smartcity/sensors/" + fmt.Sprint(sensor.Index)
 		sm.mqttClient.Publish(topic, 0, false, payload)
+		//log.Println("Sensor:", sensor.Index, "CarsOnSensor:", sensor.CarsOnSensor)
 	}
-}
-
-func (sm *SensorManager) UpdateCars(cars []CarData) {
-	sm.carsMutex.Lock()
-	defer sm.carsMutex.Unlock()
-	sm.cars = cars
 }

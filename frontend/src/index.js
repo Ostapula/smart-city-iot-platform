@@ -274,37 +274,84 @@ function animate() {
     renderer.render(scene, camera);
 }
 
+// function createSensors() {
+//     const sensorGeometry = new THREE.SphereGeometry(1, 16, 16);
+//     const sensorMaterial = new THREE.MeshBasicMaterial({
+//         color: 0x0000ff,
+//         transparent: true,
+//         opacity: 0.5,
+//     });
+
+//     const sensorRangeGeometry = new THREE.CylinderGeometry(5, 5, 0.1, 32);
+//     const sensorRangeMaterial = new THREE.MeshBasicMaterial({
+//         color: 0x0000ff,
+//         transparent: true,
+//         opacity: 0.2,
+//     });
+
+//     const sensorPositions = [
+//         { position: new THREE.Vector3(6, 0.5, 12), index: 0 },   // North
+//         { position: new THREE.Vector3(-6, 0.5, -12), index: 1 }, // South
+//         { position: new THREE.Vector3(-12, 0.5, 6), index: 2 },  // East
+//         { position: new THREE.Vector3(12, 0.5, -6), index: 3 },  // West
+//     ];
+
+//     sensorPositions.forEach((sensor) => {
+//         const sensorMesh = new THREE.Mesh(sensorGeometry, sensorMaterial);
+//         sensorMesh.position.copy(sensor.position);
+//         scene.add(sensorMesh);
+
+//         const sensorRangeMesh = new THREE.Mesh(sensorRangeGeometry, sensorRangeMaterial);
+//         sensorRangeMesh.position.copy(sensor.position);
+//         //sensorRangeMesh.rotation.x = Math.PI / 2;
+//         scene.add(sensorRangeMesh);
+//     });
+// }
+
 function createSensors() {
-    const sensorGeometry = new THREE.SphereGeometry(1, 16, 16);
+    // Replace the sphere geometry with a box geometry for the sensor itself
+    // Adjust the dimensions as needed.
+    const sensorGeometry = new THREE.BoxGeometry(1, 1, 2);
     const sensorMaterial = new THREE.MeshBasicMaterial({
         color: 0x0000ff,
         transparent: true,
         opacity: 0.5,
     });
 
-    const sensorRangeGeometry = new THREE.CylinderGeometry(5, 5, 0.1, 32);
+    // Replace the cylinder geometry with a box geometry for the sensor's range
+    // Adjust the dimensions for your desired rectangular footprint.
+    const sensorRangeGeometryEastWest = new THREE.BoxGeometry(10, 0.1, 4);
+    const sensorRangeGeometryNorthSouth = new THREE.BoxGeometry(4, 0.1, 10);
     const sensorRangeMaterial = new THREE.MeshBasicMaterial({
         color: 0x0000ff,
         transparent: true,
         opacity: 0.2,
     });
 
+    // Update sensor positions accordingly
     const sensorPositions = [
-        { position: new THREE.Vector3(6, 0.5, 12), index: 0 },   // North
-        { position: new THREE.Vector3(-6, 0.5, -12), index: 1 }, // South
-        { position: new THREE.Vector3(-12, 0.5, 6), index: 2 },  // East
-        { position: new THREE.Vector3(12, 0.5, -6), index: 3 },  // West
+        { position: new THREE.Vector3(3, 0.5, 13), index: 0 },   // North
+        { position: new THREE.Vector3(-3, 0.5, -13), index: 1 }, // South
+        { position: new THREE.Vector3(-13, 0.5, 3), index: 2 },  // East
+        { position: new THREE.Vector3(13, 0.5, -3), index: 3 },  // West
     ];
 
     sensorPositions.forEach((sensor) => {
         const sensorMesh = new THREE.Mesh(sensorGeometry, sensorMaterial);
         sensorMesh.position.copy(sensor.position);
         scene.add(sensorMesh);
-
-        const sensorRangeMesh = new THREE.Mesh(sensorRangeGeometry, sensorRangeMaterial);
+        let sensorRangeMesh;
+        if (sensor.index == 0 || sensor.index == 1) {
+            sensorRangeMesh = new THREE.Mesh(sensorRangeGeometryNorthSouth, sensorRangeMaterial);
+        } else if (sensor.index == 2 || sensor.index == 3) {
+            sensorRangeMesh = new THREE.Mesh(sensorRangeGeometryEastWest, sensorRangeMaterial);
+        }   else {
+            sensorRangeMesh = new THREE.Mesh(sensorGeometry, sensorMaterial);
+        }
         sensorRangeMesh.position.copy(sensor.position);
-        //sensorRangeMesh.rotation.x = Math.PI / 2;
+        // If you want to rotate it so that the longer side faces a certain direction, adjust here.
+        // For example, rotate around Y by 90 degrees to change the long edge orientation:
+        // sensorRangeMesh.rotation.y = Math.PI / 2;
         scene.add(sensorRangeMesh);
     });
 }
-

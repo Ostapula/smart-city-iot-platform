@@ -195,7 +195,7 @@ func simulateTrafficFlow() {
 		updateCarPositions(deltaTime)
 
 		updateTrafficLights(deltaTime)
-
+		//log.Println(demand)
 		data := map[string]interface{}{
 			"type":          "update",
 			"cars":          cars,
@@ -251,36 +251,6 @@ func updateCarPositions(deltaTime float64) {
 	}
 }
 
-// func updateTrafficLights(deltaTime float64) {
-// 	timeSinceLastChange += deltaTime
-// 	maxWaitTime := 0.0
-// 	maxCars := 0
-// 	sensorIndexToGreen := -1
-
-// 	sensorDataMutex.Lock()
-// 	for _, data := range sensorData {
-// 		numCars := len(data.CarIDs)
-// 		if numCars > 0 {
-// 			if data.WaitTime > maxWaitTime || (data.WaitTime == maxWaitTime && numCars > maxCars) {
-// 				maxWaitTime = data.WaitTime
-// 				maxCars = numCars
-// 				sensorIndexToGreen = data.SensorIndex
-// 			}
-// 		}
-// 	}
-// 	sensorDataMutex.Unlock()
-
-//		if timeSinceLastChange >= 6.0 && sensorIndexToGreen != -1 {
-//			for i := range trafficLights {
-//				if trafficLights[i].Index == sensorIndexToGreen {
-//					trafficLights[i].State = "green"
-//				} else {
-//					trafficLights[i].State = "red"
-//				}
-//			}
-//			timeSinceLastChange = 0.0
-//		}
-//	}
 func updateTrafficLights(deltaTime float64) {
 	// 1. Update how long we've been in the current phase (or yellow)
 	if intersectionState.InYellow {
