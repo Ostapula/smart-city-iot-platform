@@ -90,25 +90,25 @@ var cars = []sensor.CarData{
 		ID:        "car1",
 		Position:  sensor.Vector3{X: -2, Y: 0.25, Z: -50},
 		Direction: sensor.Vector3{X: 0, Y: 0, Z: 1},
-		Speed:     3,
+		Speed:     5,
 	},
 	{
 		ID:        "car2",
 		Position:  sensor.Vector3{X: 2, Y: 0.25, Z: 50},
 		Direction: sensor.Vector3{X: 0, Y: 0, Z: -1},
-		Speed:     3,
+		Speed:     5,
 	},
 	{
 		ID:        "car3",
 		Position:  sensor.Vector3{X: -50, Y: 0.25, Z: 2},
 		Direction: sensor.Vector3{X: 1, Y: 0, Z: 0},
-		Speed:     3,
+		Speed:     5,
 	},
 	{
 		ID:        "car4",
 		Position:  sensor.Vector3{X: 50, Y: 0.25, Z: -2},
 		Direction: sensor.Vector3{X: -1, Y: 0, Z: 0},
-		Speed:     3,
+		Speed:     5,
 	},
 	{
 		ID:        "car5",
@@ -117,7 +117,7 @@ var cars = []sensor.CarData{
 		Speed:     3,
 	},
 	{
-		ID:        "car5",
+		ID:        "car6",
 		Position:  sensor.Vector3{X: 2, Y: 0.25, Z: 59},
 		Direction: sensor.Vector3{X: 0, Y: 0, Z: -1},
 		Speed:     3,
@@ -213,12 +213,12 @@ func updateCarPositions(deltaTime float64) {
 		canMove := true
 
 		// TODO: check for the car in front
-		canMove = isCarShouldStop(*car)
+		canMove = isCarShouldMove(*car)
 
 		trafficLightIndex := getRelevantTrafficLight(*car)
 		if trafficLightIndex != -1 {
 			light := trafficLights[trafficLightIndex]
-			if light.State == "red" {
+			if light.State == "red" || light.State == "yellow" {
 				stopZone := getStopZoneForLight(light.Index)
 				if isCarApproachingStopZone(*car, stopZone) {
 					canMove = false
@@ -236,15 +236,15 @@ func updateCarPositions(deltaTime float64) {
 
 	for i := range cars {
 		car := &cars[i]
-		if math.Abs(car.Position.X) > 60 || math.Abs(car.Position.Z) > 60 {
+		if math.Abs(car.Position.X) > 65 || math.Abs(car.Position.Z) > 65 {
 			//log.Printf("Befor reset x: %v | z: %v- \n ", car.Position.X, car.Position.Z)
 			if car.Direction.Z != 0 {
-				car.Position.Z = car.Position.Z * -1
+				car.Position.Z = car.Position.Z * -0.99
 			} else if car.Direction.X != 0 {
-				car.Position.X = car.Position.X * -1
+				car.Position.X = car.Position.X * -0.99
 			} else {
-				car.Position.X = car.Position.X * -1
-				car.Position.Z = car.Position.Z * -1
+				car.Position.X = car.Position.X * -0.99
+				car.Position.Z = car.Position.Z * -0.99
 			}
 			//log.Printf("After reset x: %v | z: %v- \n ", car.Position.X, car.Position.Z)
 		}
@@ -397,18 +397,23 @@ func isCarApproachingStopZone(car sensor.CarData, stopZone Vector3) bool {
 	return false
 }
 
-func isCarShouldStop(car sensor.CarData) bool {
-	threshold := 4.5
+func isCarShouldMove(car sensor.CarData) bool {
+	threshold := 5.1
 	for i := range cars {
 		car2 := &cars[i]
-		if car2 != &car && car.Direction == car2.Direction {
+		if car2.ID != car.ID && car.Direction == car2.Direction {
 			dx := car2.Position.X - car.Position.X
 			dy := car2.Position.Y - car.Position.Y
 			dz := car2.Position.Z - car.Position.Z
 
 			projection := dx*car.Direction.X + dy*car.Direction.Y + dz*car.Direction.Z
+			// if car.ID == "car1" || car.ID == "car5" {
+			// 	log.Printf("%v CHECK car %v: %v | %v | dx %v | dy %v | dz %v | projection %v", car, car2, projection > 0, projection < threshold, dx, dy, dz, projection)
+			// }
 			if projection > 0 && projection < threshold {
-				//log.Printf("Aproaching stop zone: %v | %v ", projection > 0, projection < threshold)
+				// if car.ID == "car1" || car.ID == "car5" {
+				// 	log.Printf("%v aproaching car %v: %v | %v | dx %v | dy %v | dz %v | projection %v", car, car2, projection > 0, projection < threshold, dx, dy, dz, projection)
+				// }
 				return false
 			}
 			return true
