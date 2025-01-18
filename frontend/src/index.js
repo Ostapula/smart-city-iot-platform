@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import smallStreet from './objects/small_street.gltf';
+import smallStreet from './objects/city_4_intersections.gltf';
 
 let scene, camera, renderer;
 let controls;
@@ -31,18 +31,73 @@ function init() {
     controls.target.set(0, 0, 0);
     controls.update();
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.77);
     scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
-    dirLight.position.set(100, 100, 100);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.77);
+    dirLight.position.set(-100, 100, 100);
     scene.add(dirLight);
 
     createStreet();
     createStreetLights();
     createSensors();
+    spawnPoints();
 
     window.addEventListener('resize', onWindowResize, false);
+}
+
+function spawnPoints() {
+    //south
+    const geometry = new THREE.BoxGeometry(1, 0.5, 2);
+    const material = new THREE.MeshLambertMaterial({ color: 0xFF00FF });
+    const carMesh = new THREE.Mesh(geometry, material);
+    carMesh.position.set(-3, 0.25, -65);
+    scene.add(carMesh);
+
+    const geometry1 = new THREE.BoxGeometry(1, 0.5, 2);
+    const material1 = new THREE.MeshLambertMaterial({ color: 0xFF00FF });
+    const carMesh1 = new THREE.Mesh(geometry1, material1);
+    carMesh1.position.set(-95, 0.25, -65);
+    scene.add(carMesh1);
+
+    //east
+    const geometry2 = new THREE.BoxGeometry(1, 0.5, 2);
+    const material2 = new THREE.MeshLambertMaterial({ color: 0xFF00FF });
+    const carMesh2 = new THREE.Mesh(geometry2, material2);
+    carMesh2.position.set(-145, 0.25, 2);
+    scene.add(carMesh2);
+
+    const geometry3 = new THREE.BoxGeometry(1, 0.5, 2);
+    const material3 = new THREE.MeshLambertMaterial({ color: 0xFF00FF });
+    const carMesh3 = new THREE.Mesh(geometry3, material3);
+    carMesh3.position.set(-145, 0.25, 95);
+    scene.add(carMesh3);
+
+    //north
+    const geometry4 = new THREE.BoxGeometry(1, 0.5, 2);
+    const material4 = new THREE.MeshLambertMaterial({ color: 0xFF00FF });
+    const carMesh4 = new THREE.Mesh(geometry4, material4);
+    carMesh4.position.set(3, 0.25, 165);
+    scene.add(carMesh4);
+
+    const geometry5 = new THREE.BoxGeometry(1, 0.5, 2);
+    const material5 = new THREE.MeshLambertMaterial({ color: 0xFF00FF });
+    const carMesh5 = new THREE.Mesh(geometry5, material5);
+    carMesh5.position.set(-89, 0.25, 165);
+    scene.add(carMesh5);
+
+    //west
+    const geometry6 = new THREE.BoxGeometry(1, 0.5, 2);
+    const material6 = new THREE.MeshLambertMaterial({ color: 0xFF00FF });
+    const carMesh6 = new THREE.Mesh(geometry6, material6);
+    carMesh6.position.set(65, 0.25, -3);
+    scene.add(carMesh6);
+
+    const geometry7 = new THREE.BoxGeometry(1, 0.5, 2);
+    const material7 = new THREE.MeshLambertMaterial({ color: 0xFF00FF });
+    const carMesh7 = new THREE.Mesh(geometry7, material7);
+    carMesh7.position.set(65, 0.25, 89);
+    scene.add(carMesh7);
 }
 
 function onWindowResize() {
@@ -188,6 +243,18 @@ function createStreetLights() {
         { pos: new THREE.Vector3(-8, poleHeight / 2, -8), lightPosX: 0, lightPosZ: -0.3, index: 1 },  // South
         { pos: new THREE.Vector3(-8, poleHeight / 2, 8), lightPosX: -0.3, lightPosZ: 0, index: 2 },  // East 
         { pos: new THREE.Vector3(8, poleHeight / 2, -8), lightPosX: 0.3, lightPosZ: 0, index: 3 },  // West 
+        { pos: new THREE.Vector3(-84, poleHeight / 2, 8), lightPosX: 0, lightPosZ: 0.3, index: 4 },  // North 1
+        { pos: new THREE.Vector3(-100, poleHeight / 2, -8), lightPosX: 0, lightPosZ: -0.3, index: 5 },  // South 1
+        { pos: new THREE.Vector3(-100, poleHeight / 2, 8), lightPosX: -0.3, lightPosZ: 0, index: 6 },  // East 1
+        { pos: new THREE.Vector3(-84, poleHeight / 2, -8), lightPosX: 0.3, lightPosZ: 0, index: 7 },  // West 1
+        { pos: new THREE.Vector3(-84, poleHeight / 2, 100), lightPosX: 0, lightPosZ: 0.3, index: 8 },  // North 2
+        { pos: new THREE.Vector3(-100, poleHeight / 2, 84), lightPosX: 0, lightPosZ: -0.3, index: 9 },  // South 2
+        { pos: new THREE.Vector3(-100, poleHeight / 2, 100), lightPosX: -0.3, lightPosZ: 0, index: 10 },  // East 2
+        { pos: new THREE.Vector3(-84, poleHeight / 2, 84), lightPosX: 0.3, lightPosZ: 0, index: 11 },  // West 2
+        { pos: new THREE.Vector3(8, poleHeight / 2, 100), lightPosX: 0, lightPosZ: 0.3, index: 12 },  // North 3
+        { pos: new THREE.Vector3(-8, poleHeight / 2, 84), lightPosX: 0, lightPosZ: -0.3, index: 13 },  // South 3
+        { pos: new THREE.Vector3(-8, poleHeight / 2, 100), lightPosX: -0.3, lightPosZ: 0, index: 14 },  // East 3
+        { pos: new THREE.Vector3(8, poleHeight / 2, 84), lightPosX: 0.3, lightPosZ: 0, index: 15 },  // West 3
     ];
 
     positions.forEach((position) => {
@@ -246,6 +313,42 @@ function createStreetLights() {
             case 3: // West
                 stopZonePosition.set(10, 1, -3);
                 break;
+            case 4: // North 1
+                stopZonePosition.set(-89, 1, 10);
+                break;
+            case 5: // South 1
+                stopZonePosition.set(-95, 1, -10);
+                break;
+            case 6: // East 1
+                stopZonePosition.set(-102, 1, 3);
+                break;
+            case 7: // West 1
+                stopZonePosition.set(-82, 1, -3);
+                break;
+            case 8: // North 2
+                stopZonePosition.set(-89, 1, 102);
+                break;
+            case 9: // South 2
+                stopZonePosition.set(-95, 1, 82);
+                break;
+            case 10: // East 2
+                stopZonePosition.set(-102, 1, 95);
+                break;
+            case 11: // West 2
+                stopZonePosition.set(-82, 1, 89);
+                break;
+            case 12: // North 3
+                stopZonePosition.set(3, 1, 102);
+                break;
+            case 13: // South 3
+                stopZonePosition.set(-3, 1, 82);
+                break;
+            case 14: // East 3
+                stopZonePosition.set(-10, 1, 95);
+                break;
+            case 15: // West 3
+                stopZonePosition.set(10, 1, 89);
+                break;
         }
 
         // Adjust stop zone orientation and position based on direction
@@ -274,40 +377,6 @@ function animate() {
     renderer.render(scene, camera);
 }
 
-// function createSensors() {
-//     const sensorGeometry = new THREE.SphereGeometry(1, 16, 16);
-//     const sensorMaterial = new THREE.MeshBasicMaterial({
-//         color: 0x0000ff,
-//         transparent: true,
-//         opacity: 0.5,
-//     });
-
-//     const sensorRangeGeometry = new THREE.CylinderGeometry(5, 5, 0.1, 32);
-//     const sensorRangeMaterial = new THREE.MeshBasicMaterial({
-//         color: 0x0000ff,
-//         transparent: true,
-//         opacity: 0.2,
-//     });
-
-//     const sensorPositions = [
-//         { position: new THREE.Vector3(6, 0.5, 12), index: 0 },   // North
-//         { position: new THREE.Vector3(-6, 0.5, -12), index: 1 }, // South
-//         { position: new THREE.Vector3(-12, 0.5, 6), index: 2 },  // East
-//         { position: new THREE.Vector3(12, 0.5, -6), index: 3 },  // West
-//     ];
-
-//     sensorPositions.forEach((sensor) => {
-//         const sensorMesh = new THREE.Mesh(sensorGeometry, sensorMaterial);
-//         sensorMesh.position.copy(sensor.position);
-//         scene.add(sensorMesh);
-
-//         const sensorRangeMesh = new THREE.Mesh(sensorRangeGeometry, sensorRangeMaterial);
-//         sensorRangeMesh.position.copy(sensor.position);
-//         //sensorRangeMesh.rotation.x = Math.PI / 2;
-//         scene.add(sensorRangeMesh);
-//     });
-// }
-
 function createSensors() {
     // Replace the sphere geometry with a box geometry for the sensor itself
     // Adjust the dimensions as needed.
@@ -334,6 +403,18 @@ function createSensors() {
         { position: new THREE.Vector3(-3, 0.5, -13), index: 1 }, // South
         { position: new THREE.Vector3(-13, 0.5, 3), index: 2 },  // East
         { position: new THREE.Vector3(13, 0.5, -3), index: 3 },  // West
+        { position: new THREE.Vector3(-89, 0.5, 13), index: 4 },   // North 1
+        { position: new THREE.Vector3(-95, 0.5, -13), index: 5 }, // South 1
+        { position: new THREE.Vector3(-105, 0.5, 3), index: 6 },  // East 1
+        { position: new THREE.Vector3(-79, 0.5, -3), index: 7 },  // West 1
+        { position: new THREE.Vector3(-89, 0.5, 105), index: 8 },   // North 2
+        { position: new THREE.Vector3(-95, 0.5, 79), index: 9 }, // South 2
+        { position: new THREE.Vector3(-105, 0.5, 95), index: 10 },  // East 2
+        { position: new THREE.Vector3(-79, 0.5, 89), index: 11 },  // West 2
+        { position: new THREE.Vector3(3, 0.5, 105), index: 12 },   // North 3
+        { position: new THREE.Vector3(-3, 0.5, 79), index: 13 }, // South 3
+        { position: new THREE.Vector3(-13, 0.5, 95), index: 14 },  // East 3
+        { position: new THREE.Vector3(13, 0.5, 89), index: 15 },  // West 3
     ];
 
     sensorPositions.forEach((sensor) => {
@@ -341,9 +422,9 @@ function createSensors() {
         sensorMesh.position.copy(sensor.position);
         scene.add(sensorMesh);
         let sensorRangeMesh;
-        if (sensor.index == 0 || sensor.index == 1) {
+        if (sensor.index == 0 || sensor.index == 1 || sensor.index == 4 || sensor.index == 5 || sensor.index == 8 || sensor.index == 9 || sensor.index == 12 || sensor.index == 13) {
             sensorRangeMesh = new THREE.Mesh(sensorRangeGeometryNorthSouth, sensorRangeMaterial);
-        } else if (sensor.index == 2 || sensor.index == 3) {
+        } else if (sensor.index == 2 || sensor.index == 3 || sensor.index == 6 || sensor.index == 7 || sensor.index == 9 || sensor.index == 10 || sensor.index == 11 || sensor.index == 14 || sensor.index == 15) {
             sensorRangeMesh = new THREE.Mesh(sensorRangeGeometryEastWest, sensorRangeMaterial);
         }   else {
             sensorRangeMesh = new THREE.Mesh(sensorGeometry, sensorMaterial);

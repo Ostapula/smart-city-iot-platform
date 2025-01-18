@@ -48,10 +48,22 @@ type SensorManager struct {
 func NewSensorManager(broker string, cars *[]CarData) *SensorManager {
 	manager := &SensorManager{
 		sensors: []TrafficSensor{
-			{Index: 0, Position: Vector3{X: 3, Y: 0, Z: 13}},   // North
-			{Index: 1, Position: Vector3{X: -3, Y: 0, Z: -13}}, // South
-			{Index: 2, Position: Vector3{X: -13, Y: 0, Z: 3}},  // East
-			{Index: 3, Position: Vector3{X: 13, Y: 0, Z: -3}},  // West
+			{Index: 0, Position: Vector3{X: 3, Y: 0, Z: 13}},     // North
+			{Index: 1, Position: Vector3{X: -3, Y: 0, Z: -13}},   // South
+			{Index: 2, Position: Vector3{X: -13, Y: 0, Z: 3}},    // East
+			{Index: 3, Position: Vector3{X: 13, Y: 0, Z: -3}},    // West
+			{Index: 4, Position: Vector3{X: -89, Y: 0, Z: 13}},   // North 1
+			{Index: 5, Position: Vector3{X: -95, Y: 0, Z: -13}},  // South 1
+			{Index: 6, Position: Vector3{X: -105, Y: 0, Z: 3}},   // East 1
+			{Index: 7, Position: Vector3{X: -79, Y: 0, Z: -3}},   // West 1
+			{Index: 8, Position: Vector3{X: -89, Y: 0, Z: 105}},  // North 2
+			{Index: 9, Position: Vector3{X: -95, Y: 0, Z: 79}},   // South 2
+			{Index: 10, Position: Vector3{X: -105, Y: 0, Z: 95}}, // East 2
+			{Index: 11, Position: Vector3{X: -79, Y: 0, Z: 89}},  // West 2
+			{Index: 12, Position: Vector3{X: 3, Y: 0, Z: 105}},   // North 3
+			{Index: 13, Position: Vector3{X: -3, Y: 0, Z: 79}},   // South 3
+			{Index: 14, Position: Vector3{X: -13, Y: 0, Z: 95}},  // East 3
+			{Index: 15, Position: Vector3{X: 13, Y: 0, Z: 89}},   // West 3
 		},
 		cars:           *cars,
 		lastUpdate:     time.Now(),

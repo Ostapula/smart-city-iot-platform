@@ -3,8 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"math"
+	"math/rand"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
@@ -75,14 +76,79 @@ var upgrader = websocket.Upgrader{}
 var clients = make(map[*websocket.Conn]bool)
 var clientsMutex = sync.Mutex{}
 var broadcast = make(chan []byte)
-
-//var timeSinceLastChange = 0.0
+var carCounter int64 = 8
 
 var trafficLights = []TrafficLight{
 	{Index: 0, State: "red"},
 	{Index: 1, State: "red"},
 	{Index: 2, State: "red"},
 	{Index: 3, State: "red"},
+	{Index: 4, State: "red"},
+	{Index: 5, State: "red"},
+	{Index: 6, State: "red"},
+	{Index: 7, State: "red"},
+	{Index: 8, State: "red"},
+	{Index: 9, State: "red"},
+	{Index: 10, State: "red"},
+	{Index: 11, State: "red"},
+	{Index: 12, State: "red"},
+	{Index: 13, State: "red"},
+	{Index: 14, State: "red"},
+	{Index: 15, State: "red"},
+}
+
+// We'll define 8 EXACT spawn points, each one a single (x,z) coordinate
+// plus one direction (no "range" for x,z).
+var spawnPoints = []struct {
+	X, Z               float64
+	DirX, DirZ         float64
+	SpeedMin, SpeedMax float64
+}{
+	// SOUTH (two lanes) -> heading north
+	{X: -3, Z: -65, DirX: 0, DirZ: 1, SpeedMin: 2, SpeedMax: 4},
+	{X: -95, Z: -65, DirX: 0, DirZ: 1, SpeedMin: 2, SpeedMax: 4},
+
+	// EAST (two lanes) -> heading west
+	{X: -145, Z: 2, DirX: 1, DirZ: 0, SpeedMin: 2, SpeedMax: 4},
+	{X: -145, Z: 95, DirX: 1, DirZ: 0, SpeedMin: 2, SpeedMax: 4},
+
+	// NORTH (two lanes) -> heading south
+	{X: 3, Z: 165, DirX: 0, DirZ: -1, SpeedMin: 2, SpeedMax: 4},
+	{X: -89, Z: 165, DirX: 0, DirZ: -1, SpeedMin: 2, SpeedMax: 4},
+
+	// WEST (two lanes) -> heading east
+	{X: 65, Z: -3, DirX: -1, DirZ: 0, SpeedMin: 2, SpeedMax: 4},
+	{X: 65, Z: 89, DirX: -1, DirZ: 0, SpeedMin: 2, SpeedMax: 4},
+}
+
+// var timeSinceLastChange = 0.0
+type IntersectionZone struct {
+	Index      int
+	MinX, MaxX float64
+	MinZ, MaxZ float64
+}
+
+var intersectionZones = []IntersectionZone{
+	{
+		Index: 0,
+		MinX:  -30, MaxX: 30,
+		MinZ: -30, MaxZ: 30,
+	},
+	{
+		Index: 1,
+		MinX:  -110, MaxX: -70,
+		MinZ: -30, MaxZ: 30,
+	},
+	{
+		Index: 2,
+		MinX:  -110, MaxX: -70,
+		MinZ: 70, MaxZ: 110,
+	},
+	{
+		Index: 3,
+		MinX:  -30, MaxX: 30,
+		MinZ: 70, MaxZ: 110,
+	},
 }
 
 var cars = []sensor.CarData{
@@ -138,6 +204,7 @@ var cars = []sensor.CarData{
 
 var sensorData = make(map[int]sensor.SensorDataMessage)
 var sensorDataMutex = sync.Mutex{}
+var rng = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 func main() {
 	opts := mqtt.NewClientOptions()
@@ -159,6 +226,7 @@ func main() {
 
 	go simulateTrafficFlow()
 	go handleMessages()
+	go spawnRandomCars()
 
 	router := gin.Default()
 	router.Use(cors.Default())
@@ -231,12 +299,18 @@ func updateCarPositions(deltaTime float64) {
 			car.Position.X += car.Direction.X * car.Speed * deltaTime
 			car.Position.Y += car.Direction.Y * car.Speed * deltaTime
 			car.Position.Z += car.Direction.Z * car.Speed * deltaTime
+
+			// intersectionIndex := getIntersectionForPosition(car.Position.X, car.Position.Z)
+			// if intersectionIndex != -1 {
+			// 	// Attempt random turning
+			// 	maybeChangeDirection(car, intersectionIndex)
+			// }
 		}
 	}
 
 	for i := range cars {
 		car := &cars[i]
-		if math.Abs(car.Position.X) > 65 || math.Abs(car.Position.Z) > 65 {
+		if car.Position.Z < -65 || car.Position.Z > 165 || car.Position.X > 65 || car.Position.X < -145 {
 			//log.Printf("Befor reset x: %v | z: %v- \n ", car.Position.X, car.Position.Z)
 			if car.Direction.Z != 0 {
 				car.Position.Z = car.Position.Z * -0.99
@@ -337,18 +411,105 @@ func inCurrentPhase(lightIndex int) bool {
 }
 
 func getStopZoneForLight(lightIndex int) Vector3 {
-	switch lightIndex {
-	case 0: // North
-		return Vector3{X: 3, Y: 0, Z: 10}
-	case 1: // South
-		return Vector3{X: -3, Y: 0, Z: -10}
-	case 2: // East
-		return Vector3{X: -10, Y: 0, Z: 3}
-	case 3: // West
-		return Vector3{X: 10, Y: 0, Z: -3}
-	default:
-		return Vector3{X: 0, Y: 0, Z: 0}
+	intersection := lightIndex / 4
+	approach := lightIndex % 4
+
+	// default or fallback:
+	stopZone := Vector3{X: 0, Y: 0, Z: 0}
+
+	// Example coordinates (adjust them to match your roads):
+	switch intersection {
+	case 0:
+		switch approach {
+		case 0: // north
+			stopZone = Vector3{X: 3, Y: 0, Z: 10}
+		case 1: // south
+			stopZone = Vector3{X: -3, Y: 0, Z: -10}
+		case 2: // east
+			stopZone = Vector3{X: -10, Y: 0, Z: 3}
+		case 3: // west
+			stopZone = Vector3{X: 10, Y: 0, Z: -3}
+		}
+	case 1:
+		switch approach {
+		case 0: // north
+			stopZone = Vector3{X: -89, Y: 0, Z: 10}
+		case 1: // south
+			stopZone = Vector3{X: -95, Y: 0, Z: -10}
+		case 2: // east
+			stopZone = Vector3{X: -102, Y: 0, Z: 3}
+		case 3: // west
+			stopZone = Vector3{X: -82, Y: 0, Z: -3}
+		}
+	case 2:
+		switch approach {
+		case 0: // north
+			stopZone = Vector3{X: -89, Y: 0, Z: 102}
+		case 1: // south
+			stopZone = Vector3{X: -95, Y: 0, Z: 82}
+		case 2: // east
+			stopZone = Vector3{X: -102, Y: 0, Z: 95}
+		case 3: // west
+			stopZone = Vector3{X: -82, Y: 0, Z: 89}
+		}
+	case 3:
+		switch approach {
+		case 0: // north
+			stopZone = Vector3{X: 3, Y: 0, Z: 102}
+		case 1: // south
+			stopZone = Vector3{X: -3, Y: 0, Z: 82}
+		case 2: // east
+			stopZone = Vector3{X: -10, Y: 0, Z: 95}
+		case 3: // west
+			stopZone = Vector3{X: 10, Y: 0, Z: 89}
+		}
 	}
+	return stopZone
+}
+
+func spawnRandomCars() {
+	// For example, spawn a car every 3 seconds
+	ticker := time.NewTicker(3 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		<-ticker.C
+		spawnCarRandomLane()
+	}
+}
+
+func spawnCarRandomLane() {
+	// 1) Pick a random spawn point
+	sp := spawnPoints[rng.Intn(len(spawnPoints))]
+
+	// 2) Random speed within [SpeedMin..SpeedMax]
+	speed := sp.SpeedMin + rng.Float64()*(sp.SpeedMax-sp.SpeedMin)
+
+	// 3) Build a unique car ID
+	carCounter++
+	newCarID := "car" + strconv.FormatInt(carCounter, 10)
+
+	// 4) Create the new car
+	newCar := sensor.CarData{
+		ID: newCarID,
+		Position: sensor.Vector3{
+			X: sp.X,
+			Y: 0.25,
+			Z: sp.Z,
+		},
+		Direction: sensor.Vector3{
+			X: sp.DirX,
+			Y: 0,
+			Z: sp.DirZ,
+		},
+		Speed: speed,
+	}
+
+	// 5) Add to global slice
+	cars = append(cars, newCar)
+
+	fmt.Printf("Spawned %v at (%.2f, %.2f) heading (%.2f, %.2f), speed=%.2f\n",
+		newCarID, sp.X, sp.Z, sp.DirX, sp.DirZ, speed)
 }
 
 func isCarApproachingStopZone(car sensor.CarData, stopZone Vector3) bool {
@@ -371,45 +532,99 @@ func isCarShouldMove(car sensor.CarData) bool {
 	threshold := 5.1
 	for i := range cars {
 		car2 := &cars[i]
-		if car2.ID != car.ID && car.Direction == car2.Direction {
+		// Only check cars going in the same direction
+		if car2.ID != car.ID && car.Direction.X == car2.Direction.X && car.Direction.Z == car2.Direction.Z {
 			dx := car2.Position.X - car.Position.X
 			dy := car2.Position.Y - car.Position.Y
 			dz := car2.Position.Z - car.Position.Z
 
 			projection := dx*car.Direction.X + dy*car.Direction.Y + dz*car.Direction.Z
-			// if car.ID == "car1" || car.ID == "car5" {
-			// 	log.Printf("%v CHECK car %v: %v | %v | dx %v | dy %v | dz %v | projection %v", car, car2, projection > 0, projection < threshold, dx, dy, dz, projection)
-			// }
+
+			// If there's a car ahead within threshold distance, don't move
 			if projection > 0 && projection < threshold {
-				// if car.ID == "car1" || car.ID == "car5" {
-				// 	log.Printf("%v aproaching car %v: %v | %v | dx %v | dy %v | dz %v | projection %v", car, car2, projection > 0, projection < threshold, dx, dy, dz, projection)
-				// }
 				return false
 			}
-			return true
 		}
 	}
 
+	// No cars ahead within threshold, safe to move
 	return true
 }
 
 func getRelevantTrafficLight(car sensor.CarData) int {
+	// 1) Which intersection zone is the car in (or near)?
+	intersectionIndex := getIntersectionForPosition(car.Position.X, car.Position.Z)
+	if intersectionIndex == -1 {
+		return -1 // Car is not in any intersection zone
+	}
+
+	// 2) Which approach for that intersection?
+	//    0 => north, 1 => south, 2 => east, 3 => west
+	approach := -1
 	if car.Direction.Z < 0 {
-		// Car is moving north
-		return 0 // North traffic light
+		approach = 0 // north
 	} else if car.Direction.Z > 0 {
-		// Car is moving south
-		return 1 // South traffic light
+		approach = 1 // south
 	} else if car.Direction.X > 0 {
-		// Car is moving east
-		return 2 // East traffic light
+		approach = 2 // east
 	} else if car.Direction.X < 0 {
-		// Car is moving west
-		return 3 // West traffic light
+		approach = 3 // west
 	} else {
 		return -1
 	}
+
+	// 3) Map (intersectionIndex, approach) => trafficLightIndex
+	//    intersection i has 4 lights, so we do: i*4 + approach
+	return intersectionIndex*4 + approach
 }
+
+func getIntersectionForPosition(x, z float64) int {
+	for _, zone := range intersectionZones {
+		if x >= zone.MinX && x <= zone.MaxX &&
+			z >= zone.MinZ && z <= zone.MaxZ {
+			return zone.Index
+		}
+	}
+	return -1
+}
+
+// func maybeChangeDirection(car *sensor.CarData, intersectionIndex int) {
+// 	// If intersection is 0 (the center?), maybe skip turning to show it ignoring the center.
+// 	if intersectionIndex == 0 {
+// 		return
+// 	}
+
+// 	// Let's say 1/4 chance to turn
+// 	if rng.Float64() < 0.25 {
+// 		// car can choose left, right, or go straight
+// 		// Weighted random among: left=33%, right=33%, straight=33%
+// 		roll := rng.Float64()
+// 		if roll < 0.33 {
+// 			turnLeft(car)
+// 		} else if roll < 0.66 {
+// 			turnRight(car)
+// 		} else {
+// 			// do nothing (go straight)
+// 		}
+// 	}
+// }
+
+// func turnLeft(car *sensor.CarData) {
+// 	// If you treat north=(0,1), east=(1,0), south=(0,-1), west=(-1,0),
+// 	// then turning left is basically a rotation of (-dirZ, dirX).
+// 	oldX := car.Direction.X
+// 	oldZ := car.Direction.Z
+// 	car.Direction.X = -oldZ
+// 	car.Direction.Z = oldX
+// }
+
+// func turnRight(car *sensor.CarData) {
+// 	// turning right is (dirZ, -dirX)
+// 	oldX := car.Direction.X
+// 	oldZ := car.Direction.Z
+// 	car.Direction.X = oldZ
+// 	car.Direction.Z = -oldX
+// }
 
 func serveWs(w http.ResponseWriter, r *http.Request) {
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
