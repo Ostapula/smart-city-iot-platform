@@ -34,37 +34,62 @@ type TrafficLight struct {
 	State string `json:"state"` // "red" or "green"
 }
 
-// Define phases: For a simple intersection, we have two phases:
-//   - Phase 0: North-South traffic lights (indexes 0 and 1) green, East-West (2 and 3) red
-//   - Phase 1: East-West traffic lights (2 and 3) green, North-South (0 and 1) red
+// Define phases for each intersection
 type Phase struct {
 	GreenLights []int
 }
 
-// IntersectionState tracks the current phase and timing
+// IntersectionState tracks the current phase and timing for each intersection
 type IntersectionState struct {
-	CurrentPhase int
-	TimeInPhase  float64
-	MinGreen     float64
-	MaxGreen     float64
-	YellowTime   float64
-	TimeInYellow float64
-	InYellow     bool
+	CurrentPhase  int
+	TimeInPhase   float64
+	MinGreen      float64
+	MaxGreen      float64
+	YellowTime    float64
+	TimeInYellow  float64
+	InYellow      bool
+	IsRedToGreen  bool  // New field to track red->yellow->green transition
+	Demand        []float64
 }
 
-// Define our two-phase system for a 4-approach intersection:
-var phases = []Phase{
-	{GreenLights: []int{0, 1}}, // North & South
-	{GreenLights: []int{2, 3}}, // East & West
-}
-
-var intersectionState = IntersectionState{
-	CurrentPhase: 0,
-	// You can tweak these times to suit your simulation:
-	MinGreen:   4.0,  // minimum 4s of green
-	MaxGreen:   10.0, // maximum 10s of green if demand is high
-	YellowTime: 3.0,  // 2s of yellow before switching
-	InYellow:   false,
+// Create an array of intersection states, one for each intersection
+var intersectionStates = [4]IntersectionState{
+	{
+		CurrentPhase: 0,
+		MinGreen:     4.0,
+		MaxGreen:     10.0,
+		YellowTime:   3.0,
+		InYellow:     false,
+		IsRedToGreen: false,
+		Demand:       []float64{0, 0},
+	},
+	{
+		CurrentPhase: 0,
+		MinGreen:     4.0,
+		MaxGreen:     10.0,
+		YellowTime:   3.0,
+		InYellow:     false,
+		IsRedToGreen: false,
+		Demand:       []float64{0, 0},
+	},
+	{
+		CurrentPhase: 0,
+		MinGreen:     4.0,
+		MaxGreen:     10.0,
+		YellowTime:   3.0,
+		InYellow:     false,
+		IsRedToGreen: false,
+		Demand:       []float64{0, 0},
+	},
+	{
+		CurrentPhase: 0,
+		MinGreen:     4.0,
+		MaxGreen:     10.0,
+		YellowTime:   3.0,
+		InYellow:     false,
+		IsRedToGreen: false,
+		Demand:       []float64{0, 0},
+	},
 }
 
 // We'll store the "demand" from sensors for each phase
@@ -280,7 +305,6 @@ func updateCarPositions(deltaTime float64) {
 		car := &cars[i]
 		canMove := true
 
-		// TODO: check for the car in front
 		canMove = isCarShouldMove(*car)
 
 		trafficLightIndex := getRelevantTrafficLight(*car)
@@ -310,104 +334,171 @@ func updateCarPositions(deltaTime float64) {
 
 	for i := range cars {
 		car := &cars[i]
+		// Check if car is out of bounds
 		if car.Position.Z < -65 || car.Position.Z > 165 || car.Position.X > 65 || car.Position.X < -145 {
-			//log.Printf("Befor reset x: %v | z: %v- \n ", car.Position.X, car.Position.Z)
-			if car.Direction.Z != 0 {
-				car.Position.Z = car.Position.Z * -0.99
-			} else if car.Direction.X != 0 {
-				car.Position.X = car.Position.X * -0.99
-			} else {
-				car.Position.X = car.Position.X * -0.99
-				car.Position.Z = car.Position.Z * -0.99
-			}
-			//log.Printf("After reset x: %v | z: %v- \n ", car.Position.X, car.Position.Z)
+			// Pick a random spawn point
+			spawnPoint := spawnPoints[rng.Intn(len(spawnPoints))]
+			
+			// Reset position to spawn point
+			car.Position.X = spawnPoint.X
+			car.Position.Y = 0 // Assuming Y should be 0 for ground level
+			car.Position.Z = spawnPoint.Z
+			
+			// Set direction based on spawn point
+			car.Direction.X = spawnPoint.DirX
+			car.Direction.Y = 0 // Assuming Y direction should be 0 for ground level
+			car.Direction.Z = spawnPoint.DirZ
+
+			// Set random speed within spawn point's range
+			car.Speed = spawnPoint.SpeedMin + rng.Float64()*(spawnPoint.SpeedMax-spawnPoint.SpeedMin)
 		}
 	}
 }
 
 func updateTrafficLights(deltaTime float64) {
-	// 1. Update how long we've been in the current phase (or yellow)
-	if intersectionState.InYellow {
-		intersectionState.TimeInYellow += deltaTime
-		// Check if yellow time is over
-		if intersectionState.TimeInYellow >= intersectionState.YellowTime {
-			// Switch phase
-			intersectionState.InYellow = false
-			intersectionState.TimeInYellow = 0
-			switchPhase()
+	// Update each intersection independently
+	for i := range intersectionStates {
+		updateSingleIntersection(i, deltaTime)
+	}
+}
+
+func updateSingleIntersection(intersectionIndex int, deltaTime float64) {
+	state := &intersectionStates[intersectionIndex]
+	
+	// 1. Update timing
+	if state.InYellow {
+		state.TimeInYellow += deltaTime
+		if state.TimeInYellow >= state.YellowTime {
+			state.InYellow = false
+			state.TimeInYellow = 0
+			if state.IsRedToGreen {
+				// Complete the transition to green
+				state.IsRedToGreen = false
+				switchToGreen(intersectionIndex)
+			} else {
+				// Complete the transition to red
+				switchPhase(intersectionIndex)
+			}
 		}
 		return
 	} else {
-		intersectionState.TimeInPhase += deltaTime
+		state.TimeInPhase += deltaTime
 	}
 
-	// 2. Calculate demand from sensors
-	calculateDemand()
+	// 2. Calculate demand for this intersection
+	calculateIntersectionDemand(intersectionIndex)
 
-	// 3. Decide if we can extend green or if we must switch to yellow
-	//    - If below MinGreen, stay in green
-	//    - If above MaxGreen or demand is higher in the other phase, switch
-
-	if intersectionState.TimeInPhase < intersectionState.MinGreen {
-		// Don't switch if we haven't met the minimum green
+	// 3. Decision logic
+	if state.TimeInPhase < state.MinGreen {
 		return
 	}
 
-	// If we've surpassed MaxGreen, time to switch
-	if intersectionState.TimeInPhase >= intersectionState.MaxGreen {
-		triggerYellow()
+	if state.TimeInPhase >= state.MaxGreen {
+		triggerYellow(intersectionIndex)
 		return
 	}
 
-	// If the other phase's demand is significantly higher, trigger yellow
-	// (You can tune this condition or add thresholds)
-	currentDemand := demand[intersectionState.CurrentPhase]
-	otherPhase := (intersectionState.CurrentPhase + 1) % len(phases)
-	if demand[otherPhase] > currentDemand*1.2 {
-		// If the other phase's demand is 20% higher, switch
-		triggerYellow()
+	currentDemand := state.Demand[state.CurrentPhase]
+	otherPhase := (state.CurrentPhase + 1) % 2
+	if state.Demand[otherPhase] > currentDemand*1.2 {
+		triggerYellow(intersectionIndex)
 		return
 	}
 }
 
-// Trigger the yellow phase
-func triggerYellow() {
-	intersectionState.InYellow = true
-	intersectionState.TimeInYellow = 0.0
-	// Set all lights in the current phase to yellow, others to red
-	for i := range trafficLights {
-		if inCurrentPhase(i) {
-			trafficLights[i].State = "yellow"
+func calculateIntersectionDemand(intersectionIndex int) {
+	state := &intersectionStates[intersectionIndex]
+	// Reset demand for this intersection
+	state.Demand[0] = 0
+	state.Demand[1] = 0
+
+	sensorDataMutex.Lock()
+	defer sensorDataMutex.Unlock()
+
+	// Calculate demand for sensors associated with this intersection
+	baseIndex := intersectionIndex * 4
+	
+	// North-South demand (sensors 0 and 1 for each intersection)
+	northSensor := sensorData[baseIndex]
+	southSensor := sensorData[baseIndex+1]
+	state.Demand[0] = calculatePhaseDemand(northSensor, southSensor)
+
+	// East-West demand (sensors 2 and 3 for each intersection)
+	eastSensor := sensorData[baseIndex+2]
+	westSensor := sensorData[baseIndex+3]
+	state.Demand[1] = calculatePhaseDemand(eastSensor, westSensor)
+}
+
+func calculatePhaseDemand(sensor1, sensor2 sensor.SensorDataMessage) float64 {
+	cars1 := float64(len(sensor1.CarIDs))
+	cars2 := float64(len(sensor2.CarIDs))
+	return (cars1 * sensor1.WaitTime) + (cars2 * sensor2.WaitTime)
+}
+
+func triggerYellow(intersectionIndex int) {
+	state := &intersectionStates[intersectionIndex]
+	state.InYellow = true
+	state.TimeInYellow = 0.0
+	state.IsRedToGreen = false  // This is a green->yellow->red transition
+	
+	// Set lights for this intersection to yellow/red
+	baseIndex := intersectionIndex * 4
+	for i := 0; i < 4; i++ {
+		lightIndex := baseIndex + i
+		if inCurrentPhase(lightIndex, intersectionIndex) {
+			trafficLights[lightIndex].State = "yellow"
 		} else {
-			trafficLights[i].State = "red"
+			trafficLights[lightIndex].State = "red"
 		}
 	}
 }
 
-// Actually switch to the next phase after yellow completes
-func switchPhase() {
-	// Move to the next phase
-	intersectionState.CurrentPhase = (intersectionState.CurrentPhase + 1) % len(phases)
-	intersectionState.TimeInPhase = 0.0
+func switchPhase(intersectionIndex int) {
+	state := &intersectionStates[intersectionIndex]
+	state.CurrentPhase = (state.CurrentPhase + 1) % 2
+	state.TimeInPhase = 0.0
+	
+	// Start the red->yellow transition for the new phase
+	state.InYellow = true
+	state.TimeInYellow = 0.0
+	state.IsRedToGreen = true
 
-	// Update traffic lights: the new phase’s lights go green, others go red
-	for i := range trafficLights {
-		if inCurrentPhase(i) {
-			trafficLights[i].State = "green"
+	// Set new phase lights to yellow (they were red before)
+	baseIndex := intersectionIndex * 4
+	for i := 0; i < 4; i++ {
+		lightIndex := baseIndex + i
+		if inCurrentPhase(lightIndex, intersectionIndex) {
+			trafficLights[lightIndex].State = "yellow"
 		} else {
-			trafficLights[i].State = "red"
+			trafficLights[lightIndex].State = "red"
 		}
 	}
 }
 
-// Helper function to check if a traffic light index belongs to the current phase
-func inCurrentPhase(lightIndex int) bool {
-	for _, idx := range phases[intersectionState.CurrentPhase].GreenLights {
-		if idx == lightIndex {
-			return true
+func switchToGreen(intersectionIndex int) {
+	baseIndex := intersectionIndex * 4
+	
+	// Set the new phase lights to green
+	for i := 0; i < 4; i++ {
+		lightIndex := baseIndex + i
+		if inCurrentPhase(lightIndex, intersectionIndex) {
+			trafficLights[lightIndex].State = "green"
+		} else {
+			trafficLights[lightIndex].State = "red"
 		}
 	}
-	return false
+}
+
+func inCurrentPhase(lightIndex, intersectionIndex int) bool {
+	state := &intersectionStates[intersectionIndex]
+	localIndex := lightIndex % 4 // Convert to local intersection index (0-3)
+	
+	// Phase 0: North-South (indices 0,1)
+	// Phase 1: East-West (indices 2,3)
+	if state.CurrentPhase == 0 {
+		return localIndex < 2
+	}
+	return localIndex >= 2
 }
 
 func getStopZoneForLight(lightIndex int) Vector3 {
@@ -472,7 +563,7 @@ func spawnRandomCars() {
 	ticker := time.NewTicker(3 * time.Second)
 	defer ticker.Stop()
 
-	for {
+	for i := 0; i < 70; i++ {
 		<-ticker.C
 		spawnCarRandomLane()
 	}
@@ -529,7 +620,7 @@ func isCarApproachingStopZone(car sensor.CarData, stopZone Vector3) bool {
 }
 
 func isCarShouldMove(car sensor.CarData) bool {
-	threshold := 5.1
+	threshold := 3.1
 	for i := range cars {
 		car2 := &cars[i]
 		// Only check cars going in the same direction
@@ -662,31 +753,5 @@ func handleMessages() {
 			}
 		}
 		clientsMutex.Unlock()
-	}
-}
-
-func calculateDemand() {
-	// Reset
-	demand[0] = 0
-	demand[1] = 0
-
-	sensorDataMutex.Lock()
-	defer sensorDataMutex.Unlock()
-
-	// For a simple example, we combine wait time and number of cars
-	// to come up with a demand metric: demand = #cars * (wait time)
-	// You could also do a simpler or more advanced formula.
-	for _, data := range sensorData {
-		phaseIndex := -1
-		if data.SensorIndex == 0 || data.SensorIndex == 1 {
-			phaseIndex = 0 // North-South
-		} else if data.SensorIndex == 2 || data.SensorIndex == 3 {
-			phaseIndex = 1 // East-West
-		}
-		if phaseIndex != -1 {
-			// Example metric: (# cars) * (average wait time)
-			numCars := float64(len(data.CarIDs))
-			demand[phaseIndex] += numCars * data.WaitTime
-		}
 	}
 }
