@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"math/rand"
 	"net/http"
 	"strconv"
@@ -16,22 +17,16 @@ import (
 	"github.com/ostapula/smart-city-backend/internal/sensor"
 )
 
+// Vector3 (already used for traffic lights and stop zones)
 type Vector3 struct {
 	X float64 `json:"x"`
 	Y float64 `json:"y"`
 	Z float64 `json:"z"`
 }
 
-type CarData struct {
-	ID        string  `json:"id"`
-	Position  Vector3 `json:"position"`
-	Direction Vector3 `json:"direction"`
-	Speed     float64 `json:"speed"`
-}
-
 type TrafficLight struct {
 	Index int    `json:"index"`
-	State string `json:"state"` // "red" or "green"
+	State string `json:"state"` // "red", "yellow", or "green"
 }
 
 // Define phases for each intersection
@@ -41,15 +36,15 @@ type Phase struct {
 
 // IntersectionState tracks the current phase and timing for each intersection
 type IntersectionState struct {
-	CurrentPhase  int
-	TimeInPhase   float64
-	MinGreen      float64
-	MaxGreen      float64
-	YellowTime    float64
-	TimeInYellow  float64
-	InYellow      bool
-	IsRedToGreen  bool  // New field to track red->yellow->green transition
-	Demand        []float64
+	CurrentPhase int
+	TimeInPhase  float64
+	MinGreen     float64
+	MaxGreen     float64
+	YellowTime   float64
+	TimeInYellow float64
+	InYellow     bool
+	IsRedToGreen bool // Track red->yellow->green transition
+	Demand       []float64
 }
 
 // Create an array of intersection states, one for each intersection
@@ -58,7 +53,7 @@ var intersectionStates = [4]IntersectionState{
 		CurrentPhase: 0,
 		MinGreen:     4.0,
 		MaxGreen:     10.0,
-		YellowTime:   3.0,
+		YellowTime:   2.0,
 		InYellow:     false,
 		IsRedToGreen: false,
 		Demand:       []float64{0, 0},
@@ -67,7 +62,7 @@ var intersectionStates = [4]IntersectionState{
 		CurrentPhase: 0,
 		MinGreen:     4.0,
 		MaxGreen:     10.0,
-		YellowTime:   3.0,
+		YellowTime:   2.0,
 		InYellow:     false,
 		IsRedToGreen: false,
 		Demand:       []float64{0, 0},
@@ -76,7 +71,7 @@ var intersectionStates = [4]IntersectionState{
 		CurrentPhase: 0,
 		MinGreen:     4.0,
 		MaxGreen:     10.0,
-		YellowTime:   3.0,
+		YellowTime:   2.0,
 		InYellow:     false,
 		IsRedToGreen: false,
 		Demand:       []float64{0, 0},
@@ -85,18 +80,18 @@ var intersectionStates = [4]IntersectionState{
 		CurrentPhase: 0,
 		MinGreen:     4.0,
 		MaxGreen:     10.0,
-		YellowTime:   3.0,
+		YellowTime:   2.0,
 		InYellow:     false,
 		IsRedToGreen: false,
 		Demand:       []float64{0, 0},
 	},
 }
 
-// We'll store the "demand" from sensors for each phase
 // demand[0] => total demand on North-South
 // demand[1] => total demand on East-West
 var demand = []float64{0, 0}
 
+// WebSocket management
 var upgrader = websocket.Upgrader{}
 var clients = make(map[*websocket.Conn]bool)
 var clientsMutex = sync.Mutex{}
@@ -130,23 +125,22 @@ var spawnPoints = []struct {
 	SpeedMin, SpeedMax float64
 }{
 	// SOUTH (two lanes) -> heading north
-	{X: -3, Z: -65, DirX: 0, DirZ: 1, SpeedMin: 2, SpeedMax: 4},
-	{X: -95, Z: -65, DirX: 0, DirZ: 1, SpeedMin: 2, SpeedMax: 4},
+	{X: -3, Z: -65, DirX: 0, DirZ: 1, SpeedMin: 3, SpeedMax: 4},
+	{X: -95, Z: -65, DirX: 0, DirZ: 1, SpeedMin: 3, SpeedMax: 4},
 
 	// EAST (two lanes) -> heading west
-	{X: -145, Z: 2, DirX: 1, DirZ: 0, SpeedMin: 2, SpeedMax: 4},
-	{X: -145, Z: 95, DirX: 1, DirZ: 0, SpeedMin: 2, SpeedMax: 4},
+	{X: -145, Z: 2, DirX: 1, DirZ: 0, SpeedMin: 3, SpeedMax: 4},
+	{X: -145, Z: 95, DirX: 1, DirZ: 0, SpeedMin: 3, SpeedMax: 4},
 
 	// NORTH (two lanes) -> heading south
-	{X: 3, Z: 165, DirX: 0, DirZ: -1, SpeedMin: 2, SpeedMax: 4},
-	{X: -89, Z: 165, DirX: 0, DirZ: -1, SpeedMin: 2, SpeedMax: 4},
+	{X: 3, Z: 165, DirX: 0, DirZ: -1, SpeedMin: 3, SpeedMax: 4},
+	{X: -89, Z: 165, DirX: 0, DirZ: -1, SpeedMin: 3, SpeedMax: 4},
 
 	// WEST (two lanes) -> heading east
-	{X: 65, Z: -3, DirX: -1, DirZ: 0, SpeedMin: 2, SpeedMax: 4},
-	{X: 65, Z: 89, DirX: -1, DirZ: 0, SpeedMin: 2, SpeedMax: 4},
+	{X: 65, Z: -3, DirX: -1, DirZ: 0, SpeedMin: 3, SpeedMax: 4},
+	{X: 65, Z: 89, DirX: -1, DirZ: 0, SpeedMin: 3, SpeedMax: 4},
 }
 
-// var timeSinceLastChange = 0.0
 type IntersectionZone struct {
 	Index      int
 	MinX, MaxX float64
@@ -176,6 +170,7 @@ var intersectionZones = []IntersectionZone{
 	},
 }
 
+// Our global cars array uses sensor.CarData
 var cars = []sensor.CarData{
 	{
 		ID:        "car1",
@@ -229,9 +224,72 @@ var cars = []sensor.CarData{
 
 var sensorData = make(map[int]sensor.SensorDataMessage)
 var sensorDataMutex = sync.Mutex{}
+
+// We'll define a global slice of "stop zones" for each intersection approach
+// so that getRecommendedSpeed can see them as obstacles.
+type StopZone struct {
+	Position        Vector3
+	TrafficLightIdx int
+}
+
+var stopZones = []StopZone{
+	// Intersection 0 (lights 0..3)
+	// north approach => lightIndex = 0
+	{Position: Vector3{X: 3, Y: 0, Z: 10}, TrafficLightIdx: 0},
+	// south approach => lightIndex = 1
+	{Position: Vector3{X: -3, Y: 0, Z: -10}, TrafficLightIdx: 1},
+	// east approach  => lightIndex = 2
+	{Position: Vector3{X: -10, Y: 0, Z: 3}, TrafficLightIdx: 2},
+	// west approach  => lightIndex = 3
+	{Position: Vector3{X: 10, Y: 0, Z: -3}, TrafficLightIdx: 3},
+
+	// Intersection 1 (lights 4..7)
+	// north approach => lightIndex = 4
+	{Position: Vector3{X: -89, Y: 0, Z: 10}, TrafficLightIdx: 4},
+	// south approach => lightIndex = 5
+	{Position: Vector3{X: -95, Y: 0, Z: -10}, TrafficLightIdx: 5},
+	// east approach  => lightIndex = 6
+	{Position: Vector3{X: -102, Y: 0, Z: 3}, TrafficLightIdx: 6},
+	// west approach  => lightIndex = 7
+	{Position: Vector3{X: -82, Y: 0, Z: -3}, TrafficLightIdx: 7},
+
+	// Intersection 2 (lights 8..11)
+	{Position: Vector3{X: -89, Y: 0, Z: 102}, TrafficLightIdx: 8},
+	{Position: Vector3{X: -95, Y: 0, Z: 82}, TrafficLightIdx: 9},
+	{Position: Vector3{X: -102, Y: 0, Z: 95}, TrafficLightIdx: 10},
+	{Position: Vector3{X: -82, Y: 0, Z: 89}, TrafficLightIdx: 11},
+
+	// Intersection 3 (lights 12..15)
+	{Position: Vector3{X: 3, Y: 0, Z: 102}, TrafficLightIdx: 12},
+	{Position: Vector3{X: -3, Y: 0, Z: 82}, TrafficLightIdx: 13},
+	{Position: Vector3{X: -10, Y: 0, Z: 95}, TrafficLightIdx: 14},
+	{Position: Vector3{X: 10, Y: 0, Z: 89}, TrafficLightIdx: 15},
+}
+
 var rng = rand.New(rand.NewSource(time.Now().UnixNano()))
 
+// Add new struct for settings
+type Settings struct {
+	Type                  string               `json:"type"`
+	GlobalSpeedMultiplier float64              `json:"globalSpeedMultiplier"`
+	IntersectionSettings  []IntersectionTiming `json:"intersectionSettings"`
+}
+
+type IntersectionTiming struct {
+	MinGreen   float64 `json:"minGreen"`
+	MaxGreen   float64 `json:"maxGreen"`
+	YellowTime float64 `json:"yellowTime"`
+}
+
+// Add a response struct
+type SettingsResponse struct {
+	Type    string `json:"type"`
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+}
+
 func main() {
+	// MQTT setup
 	opts := mqtt.NewClientOptions()
 	opts.AddBroker("tcp://localhost:1883")
 	opts.SetClientID("main_app")
@@ -241,27 +299,35 @@ func main() {
 	}
 	defer mqttClient.Disconnect(250)
 
+	// Subscribe to sensor topics
 	for i := 0; i < 4; i++ {
 		topic := "smartcity/sensors/" + fmt.Sprint(i)
 		mqttClient.Subscribe(topic, 0, handleSensorData)
 	}
 
+	// Start sensor manager
 	sensorManager := sensor.NewSensorManager("tcp://localhost:1883", &cars)
 	go sensorManager.Start()
 
+	// Start goroutines
 	go simulateTrafficFlow()
 	go handleMessages()
 	go spawnRandomCars()
 
+	// Setup Gin server
 	router := gin.Default()
 	router.Use(cors.Default())
 	router.GET("/ws", func(c *gin.Context) {
 		serveWs(c.Writer, c.Request)
 	})
+
+	// Serve static files for frontend (adjust path if needed)
 	router.Static("/static", "../frontend")
 	router.GET("/", func(c *gin.Context) {
 		c.File("../frontend/index.html")
 	})
+
+	// Run server on :8080
 	router.Run(":8080")
 }
 
@@ -274,6 +340,7 @@ func handleSensorData(client mqtt.Client, msg mqtt.Message) {
 	sensorDataMutex.Unlock()
 }
 
+// Main simulation loop
 func simulateTrafficFlow() {
 	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
@@ -286,9 +353,9 @@ func simulateTrafficFlow() {
 		lastTime = currentTime
 
 		updateCarPositions(deltaTime)
-
 		updateTrafficLights(deltaTime)
-		//log.Println(demand)
+
+		// Broadcast state to all WebSocket clients
 		data := map[string]interface{}{
 			"type":          "update",
 			"cars":          cars,
@@ -300,63 +367,57 @@ func simulateTrafficFlow() {
 }
 
 func updateCarPositions(deltaTime float64) {
-	//log.Println(cars)
+	// For each car, compute recommended speed and move
+	accel := 2.0
+	minSpeed := 0.5 // Minimum speed when starting from stop
+
 	for i := range cars {
 		car := &cars[i]
-		canMove := true
+		targetSpeed := getRecommendedSpeed(*car, cars, stopZones)
 
-		canMove = isCarShouldMove(*car)
-
-		trafficLightIndex := getRelevantTrafficLight(*car)
-		if trafficLightIndex != -1 {
-			light := trafficLights[trafficLightIndex]
-			if light.State == "red" || light.State == "yellow" {
-				stopZone := getStopZoneForLight(light.Index)
-				if isCarApproachingStopZone(*car, stopZone) {
-					canMove = false
-					//log.Println(car.ID, car.Direction.X, car.Direction.Y, car.Direction.Z, trafficLightIndex, stopZone, canMove)
-				}
-			}
+		// If target speed > 0 (e.g., green light) but car is stopped,
+		// give it a minimum starting speed
+		if targetSpeed > 0 && car.Speed < 0.1 {
+			car.Speed = minSpeed
 		}
 
-		if canMove {
-			car.Position.X += car.Direction.X * car.Speed * deltaTime
-			car.Position.Y += car.Direction.Y * car.Speed * deltaTime
-			car.Position.Z += car.Direction.Z * car.Speed * deltaTime
-
-			// intersectionIndex := getIntersectionForPosition(car.Position.X, car.Position.Z)
-			// if intersectionIndex != -1 {
-			// 	// Attempt random turning
-			// 	maybeChangeDirection(car, intersectionIndex)
-			// }
+		// Then apply normal acceleration/deceleration
+		if car.Speed < targetSpeed {
+			car.Speed = math.Min(car.Speed+accel*deltaTime, targetSpeed)
+		} else {
+			car.Speed = math.Max(car.Speed-accel*deltaTime, targetSpeed)
 		}
+
+		// Move
+		car.Position.X += car.Direction.X * car.Speed * deltaTime
+		car.Position.Z += car.Direction.Z * car.Speed * deltaTime
 	}
 
+	// Check if cars are out of bounds and respawn them
 	for i := range cars {
 		car := &cars[i]
-		// Check if car is out of bounds
 		if car.Position.Z < -65 || car.Position.Z > 165 || car.Position.X > 65 || car.Position.X < -145 {
 			// Pick a random spawn point
-			spawnPoint := spawnPoints[rng.Intn(len(spawnPoints))]
-			
+			sp := spawnPoints[rng.Intn(len(spawnPoints))]
+
 			// Reset position to spawn point
-			car.Position.X = spawnPoint.X
-			car.Position.Y = 0 // Assuming Y should be 0 for ground level
-			car.Position.Z = spawnPoint.Z
-			
-			// Set direction based on spawn point
-			car.Direction.X = spawnPoint.DirX
-			car.Direction.Y = 0 // Assuming Y direction should be 0 for ground level
-			car.Direction.Z = spawnPoint.DirZ
+			car.Position.X = sp.X
+			car.Position.Y = 0.25
+			car.Position.Z = sp.Z
+
+			// Set direction
+			car.Direction.X = sp.DirX
+			car.Direction.Y = 0
+			car.Direction.Z = sp.DirZ
 
 			// Set random speed within spawn point's range
-			car.Speed = spawnPoint.SpeedMin + rng.Float64()*(spawnPoint.SpeedMax-spawnPoint.SpeedMin)
+			car.Speed = sp.SpeedMin + rng.Float64()*(sp.SpeedMax-sp.SpeedMin)
 		}
 	}
 }
 
+// Simple adaptive traffic light logic
 func updateTrafficLights(deltaTime float64) {
-	// Update each intersection independently
 	for i := range intersectionStates {
 		updateSingleIntersection(i, deltaTime)
 	}
@@ -364,8 +425,8 @@ func updateTrafficLights(deltaTime float64) {
 
 func updateSingleIntersection(intersectionIndex int, deltaTime float64) {
 	state := &intersectionStates[intersectionIndex]
-	
-	// 1. Update timing
+
+	// If currently in yellow, handle yellow timer
 	if state.InYellow {
 		state.TimeInYellow += deltaTime
 		if state.TimeInYellow >= state.YellowTime {
@@ -385,19 +446,20 @@ func updateSingleIntersection(intersectionIndex int, deltaTime float64) {
 		state.TimeInPhase += deltaTime
 	}
 
-	// 2. Calculate demand for this intersection
+	// Calculate demand
 	calculateIntersectionDemand(intersectionIndex)
 
-	// 3. Decision logic
+	// Minimum green time check
 	if state.TimeInPhase < state.MinGreen {
 		return
 	}
-
+	// Max green time check
 	if state.TimeInPhase >= state.MaxGreen {
 		triggerYellow(intersectionIndex)
 		return
 	}
 
+	// Demand-based check
 	currentDemand := state.Demand[state.CurrentPhase]
 	otherPhase := (state.CurrentPhase + 1) % 2
 	if state.Demand[otherPhase] > currentDemand*1.2 {
@@ -406,24 +468,25 @@ func updateSingleIntersection(intersectionIndex int, deltaTime float64) {
 	}
 }
 
+// Evaluate sensor-based demand for each intersection
 func calculateIntersectionDemand(intersectionIndex int) {
 	state := &intersectionStates[intersectionIndex]
-	// Reset demand for this intersection
+	// Reset demand
 	state.Demand[0] = 0
 	state.Demand[1] = 0
 
 	sensorDataMutex.Lock()
 	defer sensorDataMutex.Unlock()
 
-	// Calculate demand for sensors associated with this intersection
+	// Each intersection has 4 sensors => base index for that intersection
 	baseIndex := intersectionIndex * 4
-	
-	// North-South demand (sensors 0 and 1 for each intersection)
+
+	// North-South demand => sensors 0 and 1
 	northSensor := sensorData[baseIndex]
 	southSensor := sensorData[baseIndex+1]
 	state.Demand[0] = calculatePhaseDemand(northSensor, southSensor)
 
-	// East-West demand (sensors 2 and 3 for each intersection)
+	// East-West demand => sensors 2 and 3
 	eastSensor := sensorData[baseIndex+2]
 	westSensor := sensorData[baseIndex+3]
 	state.Demand[1] = calculatePhaseDemand(eastSensor, westSensor)
@@ -432,15 +495,17 @@ func calculateIntersectionDemand(intersectionIndex int) {
 func calculatePhaseDemand(sensor1, sensor2 sensor.SensorDataMessage) float64 {
 	cars1 := float64(len(sensor1.CarIDs))
 	cars2 := float64(len(sensor2.CarIDs))
+	// Weighted by wait time in sensor data
 	return (cars1 * sensor1.WaitTime) + (cars2 * sensor2.WaitTime)
 }
 
+// Switch to yellow
 func triggerYellow(intersectionIndex int) {
 	state := &intersectionStates[intersectionIndex]
 	state.InYellow = true
 	state.TimeInYellow = 0.0
-	state.IsRedToGreen = false  // This is a green->yellow->red transition
-	
+	state.IsRedToGreen = false // This is green->yellow->red
+
 	// Set lights for this intersection to yellow/red
 	baseIndex := intersectionIndex * 4
 	for i := 0; i < 4; i++ {
@@ -453,12 +518,13 @@ func triggerYellow(intersectionIndex int) {
 	}
 }
 
+// Switch the phase from (say) NS -> EW
 func switchPhase(intersectionIndex int) {
 	state := &intersectionStates[intersectionIndex]
 	state.CurrentPhase = (state.CurrentPhase + 1) % 2
 	state.TimeInPhase = 0.0
-	
-	// Start the red->yellow transition for the new phase
+
+	// Start the red->yellow->green transition
 	state.InYellow = true
 	state.TimeInYellow = 0.0
 	state.IsRedToGreen = true
@@ -475,10 +541,9 @@ func switchPhase(intersectionIndex int) {
 	}
 }
 
+// Complete the move to green
 func switchToGreen(intersectionIndex int) {
 	baseIndex := intersectionIndex * 4
-	
-	// Set the new phase lights to green
 	for i := 0; i < 4; i++ {
 		lightIndex := baseIndex + i
 		if inCurrentPhase(lightIndex, intersectionIndex) {
@@ -489,75 +554,27 @@ func switchToGreen(intersectionIndex int) {
 	}
 }
 
+// Which lights are in the active phase?
 func inCurrentPhase(lightIndex, intersectionIndex int) bool {
 	state := &intersectionStates[intersectionIndex]
-	localIndex := lightIndex % 4 // Convert to local intersection index (0-3)
-	
-	// Phase 0: North-South (indices 0,1)
-	// Phase 1: East-West (indices 2,3)
+	localIndex := lightIndex % 4
+	// Phase 0 => North-South lights (local indices 0,1)
+	// Phase 1 => East-West lights   (local indices 2,3)
 	if state.CurrentPhase == 0 {
 		return localIndex < 2
 	}
 	return localIndex >= 2
 }
 
-func getStopZoneForLight(lightIndex int) Vector3 {
-	intersection := lightIndex / 4
-	approach := lightIndex % 4
+// Just an example to retrieve a single stop zone by traffic light index (unused here)
+// func getStopZoneForLight(lightIndex int) Vector3 {
+// 	// (You already have a global stopZones slice; you can unify if you wish.)
+// 	// This function is unused in the recommended-speed approach, but left for reference.
+// 	// ...
+// 	return Vector3{X: 0, Y: 0, Z: 0}
+// }
 
-	// default or fallback:
-	stopZone := Vector3{X: 0, Y: 0, Z: 0}
-
-	// Example coordinates (adjust them to match your roads):
-	switch intersection {
-	case 0:
-		switch approach {
-		case 0: // north
-			stopZone = Vector3{X: 3, Y: 0, Z: 10}
-		case 1: // south
-			stopZone = Vector3{X: -3, Y: 0, Z: -10}
-		case 2: // east
-			stopZone = Vector3{X: -10, Y: 0, Z: 3}
-		case 3: // west
-			stopZone = Vector3{X: 10, Y: 0, Z: -3}
-		}
-	case 1:
-		switch approach {
-		case 0: // north
-			stopZone = Vector3{X: -89, Y: 0, Z: 10}
-		case 1: // south
-			stopZone = Vector3{X: -95, Y: 0, Z: -10}
-		case 2: // east
-			stopZone = Vector3{X: -102, Y: 0, Z: 3}
-		case 3: // west
-			stopZone = Vector3{X: -82, Y: 0, Z: -3}
-		}
-	case 2:
-		switch approach {
-		case 0: // north
-			stopZone = Vector3{X: -89, Y: 0, Z: 102}
-		case 1: // south
-			stopZone = Vector3{X: -95, Y: 0, Z: 82}
-		case 2: // east
-			stopZone = Vector3{X: -102, Y: 0, Z: 95}
-		case 3: // west
-			stopZone = Vector3{X: -82, Y: 0, Z: 89}
-		}
-	case 3:
-		switch approach {
-		case 0: // north
-			stopZone = Vector3{X: 3, Y: 0, Z: 102}
-		case 1: // south
-			stopZone = Vector3{X: -3, Y: 0, Z: 82}
-		case 2: // east
-			stopZone = Vector3{X: -10, Y: 0, Z: 95}
-		case 3: // west
-			stopZone = Vector3{X: 10, Y: 0, Z: 89}
-		}
-	}
-	return stopZone
-}
-
+// Car-spawning logic
 func spawnRandomCars() {
 	// For example, spawn a car every 3 seconds
 	ticker := time.NewTicker(3 * time.Second)
@@ -570,17 +587,11 @@ func spawnRandomCars() {
 }
 
 func spawnCarRandomLane() {
-	// 1) Pick a random spawn point
 	sp := spawnPoints[rng.Intn(len(spawnPoints))]
-
-	// 2) Random speed within [SpeedMin..SpeedMax]
 	speed := sp.SpeedMin + rng.Float64()*(sp.SpeedMax-sp.SpeedMin)
-
-	// 3) Build a unique car ID
 	carCounter++
 	newCarID := "car" + strconv.FormatInt(carCounter, 10)
 
-	// 4) Create the new car
 	newCar := sensor.CarData{
 		ID: newCarID,
 		Position: sensor.Vector3{
@@ -596,129 +607,137 @@ func spawnCarRandomLane() {
 		Speed: speed,
 	}
 
-	// 5) Add to global slice
 	cars = append(cars, newCar)
-
 	fmt.Printf("Spawned %v at (%.2f, %.2f) heading (%.2f, %.2f), speed=%.2f\n",
 		newCarID, sp.X, sp.Z, sp.DirX, sp.DirZ, speed)
 }
 
+// (Optional) Old approach: Dot-product checks for a near stop zone
 func isCarApproachingStopZone(car sensor.CarData, stopZone Vector3) bool {
 	threshold := 0.5
-
 	dx := stopZone.X - car.Position.X
 	dy := stopZone.Y - car.Position.Y
 	dz := stopZone.Z - car.Position.Z
-
 	projection := dx*car.Direction.X + dy*car.Direction.Y + dz*car.Direction.Z
 
-	if projection > 0 && projection < threshold {
-		//log.Printf("Aproaching stop zone: %v | %v ", projection > 0, projection < threshold)
-		return true
-	}
-	return false
+	return (projection > 0 && projection < threshold)
 }
 
+// (Optional) Old approach: Simple check for cars in front
 func isCarShouldMove(car sensor.CarData) bool {
 	threshold := 3.1
 	for i := range cars {
 		car2 := &cars[i]
-		// Only check cars going in the same direction
-		if car2.ID != car.ID && car.Direction.X == car2.Direction.X && car.Direction.Z == car2.Direction.Z {
+		if car2.ID != car.ID &&
+			car.Direction.X == car2.Direction.X &&
+			car.Direction.Z == car2.Direction.Z {
+
 			dx := car2.Position.X - car.Position.X
 			dy := car2.Position.Y - car.Position.Y
 			dz := car2.Position.Z - car.Position.Z
-
 			projection := dx*car.Direction.X + dy*car.Direction.Y + dz*car.Direction.Z
 
-			// If there's a car ahead within threshold distance, don't move
 			if projection > 0 && projection < threshold {
 				return false
 			}
 		}
 	}
-
-	// No cars ahead within threshold, safe to move
 	return true
 }
 
-func getRelevantTrafficLight(car sensor.CarData) int {
-	// 1) Which intersection zone is the car in (or near)?
-	intersectionIndex := getIntersectionForPosition(car.Position.X, car.Position.Z)
-	if intersectionIndex == -1 {
-		return -1 // Car is not in any intersection zone
-	}
+// --- Unified Stopping Logic (Recommended) ---
 
-	// 2) Which approach for that intersection?
-	//    0 => north, 1 => south, 2 => east, 3 => west
-	approach := -1
-	if car.Direction.Z < 0 {
-		approach = 0 // north
-	} else if car.Direction.Z > 0 {
-		approach = 1 // south
-	} else if car.Direction.X > 0 {
-		approach = 2 // east
-	} else if car.Direction.X < 0 {
-		approach = 3 // west
-	} else {
-		return -1
-	}
+// getRecommendedSpeed returns a float speed after checking the distance
+// to the nearest obstacle in front (car or stop zone).
+func getRecommendedSpeed(car sensor.CarData, allCars []sensor.CarData, stopZones []StopZone) float64 {
+	const minDist = 3.0   // stop if obstacle < 2m
+	const maxDist = 10.0  // full speed if obstacle >= 10m
+	const baseSpeed = 4.0 // normal cruising speed
 
-	// 3) Map (intersectionIndex, approach) => trafficLightIndex
-	//    intersection i has 4 lights, so we do: i*4 + approach
-	return intersectionIndex*4 + approach
+	obstacleDist := findClosestObstacleDistance(car, allCars, stopZones)
+	if obstacleDist < 0 {
+		// No obstacle - return to base speed
+		return baseSpeed
+	}
+	if obstacleDist <= minDist {
+		return 0
+	}
+	if obstacleDist >= maxDist {
+		return baseSpeed
+	}
+	// Gradual slowdown
+	ratio := (obstacleDist - minDist) / (maxDist - minDist)
+	return baseSpeed * ratio
 }
 
-func getIntersectionForPosition(x, z float64) int {
-	for _, zone := range intersectionZones {
-		if x >= zone.MinX && x <= zone.MaxX &&
-			z >= zone.MinZ && z <= zone.MaxZ {
-			return zone.Index
+// findClosestObstacleDistance returns the distance to the nearest obstacle
+// (a car in front or a stop zone) or -1 if none is in front
+func findClosestObstacleDistance(
+	car sensor.CarData,
+	allCars []sensor.CarData,
+	stopZones []StopZone,
+) float64 {
+	closest := math.Inf(1)
+
+	// 1) Check other cars
+	for i := 0; i < len(allCars); i++ {
+		other := allCars[i]
+		if other.ID == car.ID {
+			continue
+		}
+		// Skip if not same direction, etc.
+		sameDir := (car.Direction.X == other.Direction.X &&
+			car.Direction.Z == other.Direction.Z)
+		if !sameDir {
+			continue
+		}
+		dist := distanceInFront(car, other.Position.X, other.Position.Z)
+		if dist >= 0 && dist < closest {
+			closest = dist
 		}
 	}
-	return -1
+
+	// 2) Check stop zones
+	for _, sz := range stopZones {
+		// If traffic light for that zone is green, skip it
+		// (no reason to stop at a green light).
+		if trafficLights[sz.TrafficLightIdx].State == "green" {
+			continue
+		}
+
+		// If red or yellow, treat it as an obstacle:
+		dist := distanceInFront(car, sz.Position.X, sz.Position.Z)
+		if dist >= 0 && dist < closest {
+			closest = dist
+		}
+	}
+
+	if math.IsInf(closest, 1) {
+		return -1
+	}
+	return closest
 }
 
-// func maybeChangeDirection(car *sensor.CarData, intersectionIndex int) {
-// 	// If intersection is 0 (the center?), maybe skip turning to show it ignoring the center.
-// 	if intersectionIndex == 0 {
-// 		return
-// 	}
+// distanceInFront checks if (tx, tz) is ahead of the car (dot > 0)
+// and returns the distance if so, or -1 if behind.
+func distanceInFront(car sensor.CarData, tx, tz float64) float64 {
+	dx := tx - car.Position.X
+	dz := tz - car.Position.Z
+	dot := dx*car.Direction.X + dz*car.Direction.Z
 
-// 	// Let's say 1/4 chance to turn
-// 	if rng.Float64() < 0.25 {
-// 		// car can choose left, right, or go straight
-// 		// Weighted random among: left=33%, right=33%, straight=33%
-// 		roll := rng.Float64()
-// 		if roll < 0.33 {
-// 			turnLeft(car)
-// 		} else if roll < 0.66 {
-// 			turnRight(car)
-// 		} else {
-// 			// do nothing (go straight)
-// 		}
-// 	}
-// }
+	// If dot <= 0 => behind or perpendicular
+	if dot <= 0 {
+		return -1
+	}
+	return math.Sqrt(dx*dx + dz*dz)
+}
 
-// func turnLeft(car *sensor.CarData) {
-// 	// If you treat north=(0,1), east=(1,0), south=(0,-1), west=(-1,0),
-// 	// then turning left is basically a rotation of (-dirZ, dirX).
-// 	oldX := car.Direction.X
-// 	oldZ := car.Direction.Z
-// 	car.Direction.X = -oldZ
-// 	car.Direction.Z = oldX
-// }
-
-// func turnRight(car *sensor.CarData) {
-// 	// turning right is (dirZ, -dirX)
-// 	oldX := car.Direction.X
-// 	oldZ := car.Direction.Z
-// 	car.Direction.X = oldZ
-// 	car.Direction.Z = -oldX
-// }
+// -------------- WebSocket Handling --------------
 
 func serveWs(w http.ResponseWriter, r *http.Request) {
-	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
+	upgrader.CheckOrigin = func(r *http.Request) bool {
+		return true
+	}
 
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -731,16 +750,61 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 	clientsMutex.Unlock()
 
 	for {
-		_, _, err := ws.ReadMessage()
+		_, msg, err := ws.ReadMessage()
 		if err != nil {
 			clientsMutex.Lock()
 			delete(clients, ws)
 			clientsMutex.Unlock()
 			break
 		}
+
+		// Handle incoming messages
+		var data map[string]interface{}
+		if err := json.Unmarshal(msg, &data); err == nil {
+			if msgType, ok := data["type"].(string); ok && msgType == "settings" {
+				var settings Settings
+				if err := json.Unmarshal(msg, &settings); err == nil {
+					fmt.Printf("Received settings: %+v\n", settings)
+					updateIntersectionSettings(settings)
+
+					// Send response back to client
+					response := SettingsResponse{
+						Type:    "settings_response",
+						Success: true,
+						Message: "Settings updated successfully",
+					}
+					responseJSON, _ := json.Marshal(response)
+					ws.WriteMessage(websocket.TextMessage, responseJSON)
+				} else {
+					fmt.Printf("Error unmarshaling settings: %v\n", err)
+				}
+			}
+		}
 	}
 }
 
+func updateIntersectionSettings(settings Settings) {
+	fmt.Printf("Updating intersection settings with: %+v\n", settings)
+
+	// (Optional) handle GlobalSpeedMultiplier if you want a global effect on speeds
+	// for i := range cars {
+	//    cars[i].Speed *= settings.GlobalSpeedMultiplier
+	// }
+
+	// Update intersection settings
+	for i := range intersectionStates {
+		if i < len(settings.IntersectionSettings) {
+			timing := settings.IntersectionSettings[i]
+			intersectionStates[i].MinGreen = timing.MinGreen
+			intersectionStates[i].MaxGreen = timing.MaxGreen
+			intersectionStates[i].YellowTime = timing.YellowTime
+			fmt.Printf("Updated intersection %d: MinGreen=%v, MaxGreen=%v, YellowTime=%v\n",
+				i, timing.MinGreen, timing.MaxGreen, timing.YellowTime)
+		}
+	}
+}
+
+// Broadcasting messages to all WebSocket clients
 func handleMessages() {
 	for {
 		msg := <-broadcast

@@ -8,10 +8,18 @@ let controls;
 let trafficLights = [];
 let websocket;
 let cars = [];
+let globalSpeedMultiplier = 1.0;
+let intersectionSettings = [
+    { minGreen: 4.0, maxGreen: 10.0, yellowTime: 2.0 },
+    { minGreen: 4.0, maxGreen: 10.0, yellowTime: 2.0 },
+    { minGreen: 4.0, maxGreen: 10.0, yellowTime: 2.0 },
+    { minGreen: 4.0, maxGreen: 10.0, yellowTime: 2.0 }
+];
 
 init();
 animate();
 connectWebSocket();
+initializeControls();
 
 function init() {
     scene = new THREE.Scene();
@@ -112,11 +120,19 @@ function connectWebSocket() {
 
     websocket.onmessage = function(event) {
         const data = JSON.parse(event.data);
-        updateVisualization(data);
+        if (data.type === 'update') {
+            updateVisualization(data);
+        } else if (data.type === 'settings_response') {
+            console.log('Settings updated:', data);
+        }
     };
 
     websocket.onclose = function() {
         console.log('WebSocket connection closed');
+    };
+
+    websocket.onerror = function(error) {
+        console.error('WebSocket error:', error);
     };
 }
 
@@ -136,47 +152,83 @@ function updateCars(carDataList) {
     let color = 0xff0000
     carDataList.forEach((carData) => {
         let car = cars.find(c => c.id === carData.id);
-        //console.log(car);
         if (car) {
+            const adjustedCarData = {
+                ...carData,
+                speed: carData.speed * globalSpeedMultiplier
+            };
             car.mesh.position.set(
-                carData.position.x,
-                carData.position.y,
-                carData.position.z
+                adjustedCarData.position.x,
+                adjustedCarData.position.y,
+                adjustedCarData.position.z
             );
             car.direction.set(
-                carData.direction.x,
-                carData.direction.y,
-                carData.direction.z
+                adjustedCarData.direction.x,
+                adjustedCarData.direction.y,
+                adjustedCarData.direction.z
+            );
+            // Update sprite position
+            car.label.position.set(
+                adjustedCarData.position.x,
+                adjustedCarData.position.y + 2,
+                adjustedCarData.position.z
             );
         } else {
             color *= 0x09
             const geometry = new THREE.BoxGeometry(1, 0.5, 2);
             const material = new THREE.MeshLambertMaterial({ color: color });
             const carMesh = new THREE.Mesh(geometry, material);
+            const adjustedCarData = {
+                ...carData,
+                speed: carData.speed * globalSpeedMultiplier
+            };
             carMesh.position.set(
-                carData.position.x,
-                carData.position.y,
-                carData.position.z
+                adjustedCarData.position.x,
+                adjustedCarData.position.y,
+                adjustedCarData.position.z
             );
+
+            // Create text sprite
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = 256;
+            canvas.height = 256;
+            context.font = 'Bold 60px Arial';
+            context.fillStyle = 'white';
+            context.textAlign = 'center';
+            context.fillText(carData.id, 128, 128);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+            const sprite = new THREE.Sprite(spriteMaterial);
+            sprite.position.set(
+                adjustedCarData.position.x,
+                adjustedCarData.position.y + 2,
+                adjustedCarData.position.z
+            );
+            sprite.scale.set(2, 2, 1);
+            
             scene.add(carMesh);
+            scene.add(sprite);
+            
             cars.push({
                 id: carData.id,
                 mesh: carMesh,
+                label: sprite,
                 direction: new THREE.Vector3(
-                    carData.direction.x,
-                    carData.direction.y,
-                    carData.direction.z
+                    adjustedCarData.direction.x,
+                    adjustedCarData.direction.y,
+                    adjustedCarData.direction.z
                 ),
                 targetPosition: new THREE.Vector3(
-                    carData.position.x,
-                    carData.position.y,
-                    carData.position.z
+                    adjustedCarData.position.x,
+                    adjustedCarData.position.y,
+                    adjustedCarData.position.z
                 ),
             });
         }
     });
 }
-
 
 function updateTrafficLights(trafficLightData) {
     trafficLights.forEach((lightObj) => {
@@ -192,14 +244,18 @@ function updateTrafficLights(trafficLightData) {
             yellowLight.material.emissive.setHex(0x000000);
             greenLight.material.emissive.setHex(0x000000);
 
+            // Update state sphere color
             if (lightData.state === 'red') {
                 redLight.material.emissive.setHex(0xff0000);
+                lightObj.stateSphere.material.color.setHex(0xff0000);
                 lightObj.state = 'red';
             } else if (lightData.state === 'green') {
                 greenLight.material.emissive.setHex(0x00ff00);
+                lightObj.stateSphere.material.color.setHex(0x00ff00);
                 lightObj.state = 'green';
             } else if (lightData.state === 'yellow') {
                 yellowLight.material.emissive.setHex(0xffff00);
+                lightObj.stateSphere.material.color.setHex(0xffff00);
             }
         }
     });
@@ -282,10 +338,18 @@ function createStreetLights() {
             box.add(light);
         });
 
+        // Add large sphere above traffic light
+        const stateSphereGeometry = new THREE.SphereGeometry(1, 32, 32);
+        const stateSphereMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+        const stateSphere = new THREE.Mesh(stateSphereGeometry, stateSphereMaterial);
+        stateSphere.position.set(0, poleHeight + 2, 0); // Position above the traffic light
+        pole.add(stateSphere);
+
         scene.add(pole);
         trafficLights.push({ 
             pole: pole, 
-            box: box, 
+            box: box,
+            stateSphere: stateSphere, // Add reference to state sphere
             index: position.index,
             state: 'red'
         });
@@ -435,4 +499,108 @@ function createSensors() {
         // sensorRangeMesh.rotation.y = Math.PI / 2;
         scene.add(sensorRangeMesh);
     });
+}
+
+function initializeControls() {
+    // Car speed control
+    const carSpeedSlider = document.getElementById('carSpeed');
+    const carSpeedValue = document.getElementById('carSpeedValue');
+    
+    carSpeedSlider.addEventListener('input', (e) => {
+        globalSpeedMultiplier = parseFloat(e.target.value);
+        carSpeedValue.textContent = `${globalSpeedMultiplier}x`;
+    });
+
+    // Create intersection controls
+    const intersectionControlsDiv = document.getElementById('intersectionControls');
+    
+    for (let i = 0; i < 4; i++) {
+        const intersectionDiv = document.createElement('div');
+        intersectionDiv.className = 'intersection-controls';
+        intersectionDiv.innerHTML = `
+            <h3>Intersection ${i + 1}</h3>
+            <div class="control-group">
+                <label>Min Green Time
+                    <span class="value-display" id="minGreen${i}Value">${intersectionSettings[i].minGreen}s</span>
+                </label>
+                <input type="range" id="minGreen${i}" min="2" max="10" step="0.5" value="${intersectionSettings[i].minGreen}">
+            </div>
+            <div class="control-group">
+                <label>Max Green Time
+                    <span class="value-display" id="maxGreen${i}Value">${intersectionSettings[i].maxGreen}s</span>
+                </label>
+                <input type="range" id="maxGreen${i}" min="5" max="30" step="0.5" value="${intersectionSettings[i].maxGreen}">
+            </div>
+            <div class="control-group">
+                <label>Yellow Time
+                    <span class="value-display" id="yellow${i}Value">${intersectionSettings[i].yellowTime}s</span>
+                </label>
+                <input type="range" id="yellow${i}" min="1" max="5" step="0.5" value="${intersectionSettings[i].yellowTime}">
+            </div>
+        `;
+        intersectionControlsDiv.appendChild(intersectionDiv);
+
+        // Add listeners for this intersection's controls
+        const minGreenSlider = document.getElementById(`minGreen${i}`);
+        const maxGreenSlider = document.getElementById(`maxGreen${i}`);
+        const yellowSlider = document.getElementById(`yellow${i}`);
+
+        const minGreenValue = document.getElementById(`minGreen${i}Value`);
+        const maxGreenValue = document.getElementById(`maxGreen${i}Value`);
+        const yellowValue = document.getElementById(`yellow${i}Value`);
+
+        minGreenSlider.addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value);
+            minGreenValue.textContent = `${value}s`;
+            intersectionSettings[i].minGreen = value;
+            // Ensure min doesn't exceed max
+            if (value > maxGreenSlider.value) {
+                maxGreenSlider.value = value;
+                maxGreenValue.textContent = `${value}s`;
+                intersectionSettings[i].maxGreen = value;
+            }
+        });
+
+        maxGreenSlider.addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value);
+            maxGreenValue.textContent = `${value}s`;
+            intersectionSettings[i].maxGreen = value;
+            // Ensure max doesn't go below min
+            if (value < minGreenSlider.value) {
+                minGreenSlider.value = value;
+                minGreenValue.textContent = `${value}s`;
+                intersectionSettings[i].minGreen = value;
+            }
+        });
+
+        yellowSlider.addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value);
+            yellowValue.textContent = `${value}s`;
+            intersectionSettings[i].yellowTime = value;
+        });
+    }
+
+    // Apply changes button
+    document.getElementById('applyChanges').addEventListener('click', () => {
+        console.log('Current settings before sending:', intersectionSettings);
+        sendSettingsToBackend();
+    });
+}
+
+function sendSettingsToBackend() {
+    if (websocket.readyState === WebSocket.OPEN) {
+        const settings = {
+            type: 'settings',
+            globalSpeedMultiplier: parseFloat(globalSpeedMultiplier),
+            intersectionSettings: intersectionSettings.map(setting => ({
+                minGreen: parseFloat(setting.minGreen),
+                maxGreen: parseFloat(setting.maxGreen),
+                yellowTime: parseFloat(setting.yellowTime)
+            }))
+        };
+        console.log('Sending settings to backend:', settings);
+        websocket.send(JSON.stringify(settings));
+    } else {
+        console.error('WebSocket is not connected');
+    }
 }
