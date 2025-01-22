@@ -171,56 +171,59 @@ var intersectionZones = []IntersectionZone{
 }
 
 // Our global cars array uses sensor.CarData
-var cars = []sensor.CarData{
-	{
-		ID:        "car1",
-		Position:  sensor.Vector3{X: -2, Y: 0.25, Z: -50},
-		Direction: sensor.Vector3{X: 0, Y: 0, Z: 1},
-		Speed:     5,
-	},
-	{
-		ID:        "car2",
-		Position:  sensor.Vector3{X: 2, Y: 0.25, Z: 50},
-		Direction: sensor.Vector3{X: 0, Y: 0, Z: -1},
-		Speed:     5,
-	},
-	{
-		ID:        "car3",
-		Position:  sensor.Vector3{X: -50, Y: 0.25, Z: 2},
-		Direction: sensor.Vector3{X: 1, Y: 0, Z: 0},
-		Speed:     5,
-	},
-	{
-		ID:        "car4",
-		Position:  sensor.Vector3{X: 50, Y: 0.25, Z: -2},
-		Direction: sensor.Vector3{X: -1, Y: 0, Z: 0},
-		Speed:     5,
-	},
-	{
-		ID:        "car5",
-		Position:  sensor.Vector3{X: -2, Y: 0.25, Z: -59},
-		Direction: sensor.Vector3{X: 0, Y: 0, Z: 1},
-		Speed:     3,
-	},
-	{
-		ID:        "car6",
-		Position:  sensor.Vector3{X: 2, Y: 0.25, Z: 59},
-		Direction: sensor.Vector3{X: 0, Y: 0, Z: -1},
-		Speed:     3,
-	},
-	{
-		ID:        "car7",
-		Position:  sensor.Vector3{X: -59, Y: 0.25, Z: 2},
-		Direction: sensor.Vector3{X: 1, Y: 0, Z: 0},
-		Speed:     3,
-	},
-	{
-		ID:        "car8",
-		Position:  sensor.Vector3{X: 59, Y: 0.25, Z: -2},
-		Direction: sensor.Vector3{X: -1, Y: 0, Z: 0},
-		Speed:     3,
-	},
-}
+var (
+	cars     = []sensor.CarData{
+		{
+			ID:        "car1",
+			Position:  sensor.Vector3{X: -2, Y: 0.25, Z: -50},
+			Direction: sensor.Vector3{X: 0, Y: 0, Z: 1},
+			Speed:     5,
+		},
+		{
+			ID:        "car2",
+			Position:  sensor.Vector3{X: 2, Y: 0.25, Z: 50},
+			Direction: sensor.Vector3{X: 0, Y: 0, Z: -1},
+			Speed:     5,
+		},
+		{
+			ID:        "car3",
+			Position:  sensor.Vector3{X: -50, Y: 0.25, Z: 2},
+			Direction: sensor.Vector3{X: 1, Y: 0, Z: 0},
+			Speed:     5,
+		},
+		{
+			ID:        "car4",
+			Position:  sensor.Vector3{X: 50, Y: 0.25, Z: -2},
+			Direction: sensor.Vector3{X: -1, Y: 0, Z: 0},
+			Speed:     5,
+		},
+		{
+			ID:        "car5",
+			Position:  sensor.Vector3{X: -2, Y: 0.25, Z: -59},
+			Direction: sensor.Vector3{X: 0, Y: 0, Z: 1},
+			Speed:     3,
+		},
+		{
+			ID:        "car6",
+			Position:  sensor.Vector3{X: 2, Y: 0.25, Z: 59},
+			Direction: sensor.Vector3{X: 0, Y: 0, Z: -1},
+			Speed:     3,
+		},
+		{
+			ID:        "car7",
+			Position:  sensor.Vector3{X: -59, Y: 0.25, Z: 2},
+			Direction: sensor.Vector3{X: 1, Y: 0, Z: 0},
+			Speed:     3,
+		},
+		{
+			ID:        "car8",
+			Position:  sensor.Vector3{X: 59, Y: 0.25, Z: -2},
+			Direction: sensor.Vector3{X: -1, Y: 0, Z: 0},
+			Speed:     3,
+		},
+	}
+	carsMutex sync.RWMutex
+)
 
 var sensorData = make(map[int]sensor.SensorDataMessage)
 var sensorDataMutex = sync.Mutex{}
@@ -300,13 +303,13 @@ func main() {
 	defer mqttClient.Disconnect(250)
 
 	// Subscribe to sensor topics
-	for i := 0; i < 4; i++ {
+	for i := 0; i < 16; i++ {  // Changed from 4 to 16 to subscribe to all sensors
 		topic := "smartcity/sensors/" + fmt.Sprint(i)
 		mqttClient.Subscribe(topic, 0, handleSensorData)
 	}
 
 	// Start sensor manager
-	sensorManager := sensor.NewSensorManager("tcp://localhost:1883", &cars)
+	sensorManager := sensor.NewSensorManager("tcp://localhost:1883", &cars, &carsMutex)
 	go sensorManager.Start()
 
 	// Start goroutines
@@ -355,6 +358,9 @@ func simulateTrafficFlow() {
 		updateCarPositions(deltaTime)
 		updateTrafficLights(deltaTime)
 
+		// Log position of car1
+		logCarPositions()
+
 		// Broadcast state to all WebSocket clients
 		data := map[string]interface{}{
 			"type":          "update",
@@ -367,10 +373,12 @@ func simulateTrafficFlow() {
 }
 
 func updateCarPositions(deltaTime float64) {
-	// For each car, compute recommended speed and move
-	accel := 2.0
-	minSpeed := 0.5 // Minimum speed when starting from stop
+	carsMutex.Lock()
+	defer carsMutex.Unlock()
 
+	accel := 2.0
+    minSpeed := 0.5
+	
 	for i := range cars {
 		car := &cars[i]
 		targetSpeed := getRecommendedSpeed(*car, cars, stopZones)
@@ -484,12 +492,27 @@ func calculateIntersectionDemand(intersectionIndex int) {
 	// North-South demand => sensors 0 and 1
 	northSensor := sensorData[baseIndex]
 	southSensor := sensorData[baseIndex+1]
-	state.Demand[0] = calculatePhaseDemand(northSensor, southSensor)
+	northSouthDemand := calculatePhaseDemand(northSensor, southSensor)
+	state.Demand[0] = northSouthDemand
 
 	// East-West demand => sensors 2 and 3
 	eastSensor := sensorData[baseIndex+2]
 	westSensor := sensorData[baseIndex+3]
-	state.Demand[1] = calculatePhaseDemand(eastSensor, westSensor)
+	eastWestDemand := calculatePhaseDemand(eastSensor, westSensor)
+	state.Demand[1] = eastWestDemand
+
+	// Log detailed demand information
+	fmt.Printf("Intersection %d Demand:\n", intersectionIndex)
+	fmt.Printf("  North-South (Phase 0):\n")
+	fmt.Printf("    North: %d cars (wait: %.2fs)\n", len(northSensor.CarIDs), northSensor.WaitTime)
+	fmt.Printf("    South: %d cars (wait: %.2fs)\n", len(southSensor.CarIDs), southSensor.WaitTime)
+	fmt.Printf("    Total N-S Demand: %.2f\n", northSouthDemand)
+	fmt.Printf("  East-West (Phase 1):\n")
+	fmt.Printf("    East: %d cars (wait: %.2fs)\n", len(eastSensor.CarIDs), eastSensor.WaitTime)
+	fmt.Printf("    West: %d cars (wait: %.2fs)\n", len(westSensor.CarIDs), westSensor.WaitTime)
+	fmt.Printf("    Total E-W Demand: %.2f\n", eastWestDemand)
+	fmt.Printf("  Current Phase: %d\n", state.CurrentPhase)
+	fmt.Printf("  Time in Phase: %.2fs\n\n", state.TimeInPhase)
 }
 
 func calculatePhaseDemand(sensor1, sensor2 sensor.SensorDataMessage) float64 {
@@ -607,9 +630,11 @@ func spawnCarRandomLane() {
 		Speed: speed,
 	}
 
+	carsMutex.Lock()
 	cars = append(cars, newCar)
-	fmt.Printf("Spawned %v at (%.2f, %.2f) heading (%.2f, %.2f), speed=%.2f\n",
-		newCarID, sp.X, sp.Z, sp.DirX, sp.DirZ, speed)
+	carsMutex.Unlock()
+	// fmt.Printf("Spawned %v at (%.2f, %.2f) heading (%.2f, %.2f), speed=%.2f\n",
+	// 	newCarID, sp.X, sp.Z, sp.DirX, sp.DirZ, speed)
 }
 
 // (Optional) Old approach: Dot-product checks for a near stop zone
@@ -818,4 +843,16 @@ func handleMessages() {
 		}
 		clientsMutex.Unlock()
 	}
+}
+
+func logCarPositions() {
+	carsMutex.RLock()
+	defer carsMutex.RUnlock()
+	
+	// for _, car := range cars {
+	//     if car.ID == "car1" {
+	//         fmt.Printf("Car1 position: (%.2f, %.2f)\n", car.Position.X, car.Position.Z)
+	//         break
+	//     }
+	// }
 }

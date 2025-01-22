@@ -167,6 +167,23 @@ function updateCars(carDataList) {
                 adjustedCarData.direction.y,
                 adjustedCarData.direction.z
             );
+            
+            // Update sprite text with position
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = 256;
+            canvas.height = 256;
+            context.font = 'Bold 40px Arial';
+            context.fillStyle = 'white';
+            context.textAlign = 'center';
+            context.fillText(`ID: ${carData.id}`, 128, 100);
+            context.font = '30px Arial';
+            context.fillText(`(${adjustedCarData.position.x.toFixed(1)},`, 128, 140);
+            context.fillText(`${adjustedCarData.position.z.toFixed(1)})`, 128, 170);
+            
+            car.label.material.map.dispose();
+            car.label.material.map = new THREE.CanvasTexture(canvas);
+            
             // Update sprite position
             car.label.position.set(
                 adjustedCarData.position.x,
@@ -188,15 +205,18 @@ function updateCars(carDataList) {
                 adjustedCarData.position.z
             );
 
-            // Create text sprite
+            // Create text sprite with position
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
             canvas.width = 256;
             canvas.height = 256;
-            context.font = 'Bold 60px Arial';
+            context.font = 'Bold 40px Arial';
             context.fillStyle = 'white';
             context.textAlign = 'center';
-            context.fillText(carData.id, 128, 128);
+            context.fillText(`ID: ${carData.id}`, 128, 100);
+            context.font = '30px Arial';
+            context.fillText(`(${adjustedCarData.position.x.toFixed(1)},`, 128, 140);
+            context.fillText(`${adjustedCarData.position.z.toFixed(1)})`, 128, 170);
 
             const texture = new THREE.CanvasTexture(canvas);
             const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
@@ -206,7 +226,7 @@ function updateCars(carDataList) {
                 adjustedCarData.position.y + 2,
                 adjustedCarData.position.z
             );
-            sprite.scale.set(2, 2, 1);
+            sprite.scale.set(4, 4, 1);
             
             scene.add(carMesh);
             scene.add(sprite);
