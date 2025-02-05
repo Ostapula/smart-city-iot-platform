@@ -10,6 +10,7 @@ A platform for simulating and managing smart city traffic using IoT-based techno
 - [ ] Expand traffic phases to **8**, making intersections more complex and realistic.
 - [ ] Enhance the algorithm to support **8 phases**.
 - [ ] Fix car left-turn logic.
+- [ ] Fix car right-turn logic when speed is increased. 
 
 ---
 
