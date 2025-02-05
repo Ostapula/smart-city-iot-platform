@@ -1,8 +1,10 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import smallStreet from './objects/city_4_intersections.gltf';
+import smallStreet from './objects/scene_raw_w_houses.gltf';
+import car from './objects/car.gltf';
 
+let carModel = null;
 let scene, camera, renderer;
 let controls;
 let trafficLights = [];
@@ -15,6 +17,7 @@ let intersectionSettings = [
     { minGreen: 4.0, maxGreen: 10.0, yellowTime: 2.0 },
     { minGreen: 4.0, maxGreen: 10.0, yellowTime: 2.0 }
 ];
+let spawnPointPositions = [];
 
 init();
 animate();
@@ -46,67 +49,114 @@ function init() {
     dirLight.position.set(-100, 100, 100);
     scene.add(dirLight);
 
+    const geometry = new THREE.BoxGeometry(1, 0.5, 2);
+    const material = new THREE.MeshLambertMaterial({ color: 0xFF00FF });
+    const carMesh = new THREE.Mesh(geometry, material);
+    carMesh.position.set(0, 0, 0);
+    scene.add(carMesh);
+
     createStreet();
     createStreetLights();
     createSensors();
     spawnPoints();
 
     window.addEventListener('resize', onWindowResize, false);
+
+    // Load the car model from car.gltf
+    const loader = new GLTFLoader();
+    loader.load(
+        car,
+        (gltf) => {
+            carModel = gltf.scene;
+            console.log("Car model loaded successfully.");
+            replaceFallbackCars();
+        },
+        undefined,
+        (error) => {
+            console.error("Error loading car model:", error);
+        }
+    );
+}
+
+function replaceFallbackCars() {
+    cars.forEach(car => {
+        if (car.usingFallback) {
+            // Save the current position and rotation from the fallback mesh
+            const oldMesh = car.mesh;
+            const newMesh = carModel.clone();
+            newMesh.position.copy(oldMesh.position);
+            newMesh.rotation.copy(oldMesh.rotation);
+            
+            // Remove the old fallback mesh from the scene and add the new mesh
+            scene.remove(oldMesh);
+            scene.add(newMesh);
+            car.mesh = newMesh;
+            car.usingFallback = false;
+        }
+    });
 }
 
 function spawnPoints() {
-    //south
+    // South spawn points
     const geometry = new THREE.BoxGeometry(1, 0.5, 2);
     const material = new THREE.MeshLambertMaterial({ color: 0xFF00FF });
+    
+    // Spawn point 1
     const carMesh = new THREE.Mesh(geometry, material);
     carMesh.position.set(-3, 0.25, -65);
     scene.add(carMesh);
-
-    const geometry1 = new THREE.BoxGeometry(1, 0.5, 2);
-    const material1 = new THREE.MeshLambertMaterial({ color: 0xFF00FF });
-    const carMesh1 = new THREE.Mesh(geometry1, material1);
+    spawnPointPositions.push(new THREE.Vector3(-3, 0.25, -65));
+    
+    // Spawn point 2
+    const carMesh1 = new THREE.Mesh(geometry, material);
     carMesh1.position.set(-95, 0.25, -65);
     scene.add(carMesh1);
-
-    //east
-    const geometry2 = new THREE.BoxGeometry(1, 0.5, 2);
-    const material2 = new THREE.MeshLambertMaterial({ color: 0xFF00FF });
-    const carMesh2 = new THREE.Mesh(geometry2, material2);
+    spawnPointPositions.push(new THREE.Vector3(-95, 0.25, -65));
+    
+    // East spawn points
+    const carMesh2 = new THREE.Mesh(geometry, material);
     carMesh2.position.set(-145, 0.25, 2);
     scene.add(carMesh2);
-
-    const geometry3 = new THREE.BoxGeometry(1, 0.5, 2);
-    const material3 = new THREE.MeshLambertMaterial({ color: 0xFF00FF });
-    const carMesh3 = new THREE.Mesh(geometry3, material3);
+    spawnPointPositions.push(new THREE.Vector3(-145, 0.25, 2));
+    
+    const carMesh3 = new THREE.Mesh(geometry, material);
     carMesh3.position.set(-145, 0.25, 95);
     scene.add(carMesh3);
-
-    //north
-    const geometry4 = new THREE.BoxGeometry(1, 0.5, 2);
-    const material4 = new THREE.MeshLambertMaterial({ color: 0xFF00FF });
-    const carMesh4 = new THREE.Mesh(geometry4, material4);
+    spawnPointPositions.push(new THREE.Vector3(-145, 0.25, 95));
+    
+    // North spawn points
+    const carMesh4 = new THREE.Mesh(geometry, material);
     carMesh4.position.set(3, 0.25, 165);
     scene.add(carMesh4);
-
-    const geometry5 = new THREE.BoxGeometry(1, 0.5, 2);
-    const material5 = new THREE.MeshLambertMaterial({ color: 0xFF00FF });
-    const carMesh5 = new THREE.Mesh(geometry5, material5);
+    spawnPointPositions.push(new THREE.Vector3(3, 0.25, 165));
+    
+    const carMesh5 = new THREE.Mesh(geometry, material);
     carMesh5.position.set(-89, 0.25, 165);
     scene.add(carMesh5);
-
-    //west
-    const geometry6 = new THREE.BoxGeometry(1, 0.5, 2);
-    const material6 = new THREE.MeshLambertMaterial({ color: 0xFF00FF });
-    const carMesh6 = new THREE.Mesh(geometry6, material6);
+    spawnPointPositions.push(new THREE.Vector3(-89, 0.25, 165));
+    
+    // West spawn points
+    const carMesh6 = new THREE.Mesh(geometry, material);
     carMesh6.position.set(65, 0.25, -3);
     scene.add(carMesh6);
-
-    const geometry7 = new THREE.BoxGeometry(1, 0.5, 2);
-    const material7 = new THREE.MeshLambertMaterial({ color: 0xFF00FF });
-    const carMesh7 = new THREE.Mesh(geometry7, material7);
+    spawnPointPositions.push(new THREE.Vector3(65, 0.25, -3));
+    
+    const carMesh7 = new THREE.Mesh(geometry, material);
     carMesh7.position.set(65, 0.25, 89);
     scene.add(carMesh7);
+    spawnPointPositions.push(new THREE.Vector3(65, 0.25, 89));
 }
+
+// 2. Helper function to update opacity recursively:
+function setObjectOpacity(object, opacity) {
+    object.traverse(child => {
+        if (child.material) {
+            child.material.opacity = opacity;
+            child.material.transparent = true;
+        }
+    });
+}
+
 
 function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -149,15 +199,16 @@ function updateVisualization(data) {
 }
 
 function updateCars(carDataList) {
-    let color = 0xff0000
     carDataList.forEach((carData) => {
         let car = cars.find(c => c.id === carData.id);
+        const adjustedCarData = {
+            ...carData,
+            speed: carData.speed * globalSpeedMultiplier
+        };
+
         if (car) {
-            const adjustedCarData = {
-                ...carData,
-                speed: carData.speed * globalSpeedMultiplier
-            };
-            car.mesh.position.set(
+            // Update an existing car
+            car.targetPosition.set(
                 adjustedCarData.position.x,
                 adjustedCarData.position.y,
                 adjustedCarData.position.z
@@ -167,8 +218,8 @@ function updateCars(carDataList) {
                 adjustedCarData.direction.y,
                 adjustedCarData.direction.z
             );
-            
-            // Update sprite text with position
+
+            // Update the sprite label
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
             canvas.width = 256;
@@ -180,32 +231,37 @@ function updateCars(carDataList) {
             context.font = '30px Arial';
             context.fillText(`(${adjustedCarData.position.x.toFixed(1)},`, 128, 140);
             context.fillText(`${adjustedCarData.position.z.toFixed(1)})`, 128, 170);
-            
+
             car.label.material.map.dispose();
             car.label.material.map = new THREE.CanvasTexture(canvas);
-            
-            // Update sprite position
             car.label.position.set(
                 adjustedCarData.position.x,
                 adjustedCarData.position.y + 2,
                 adjustedCarData.position.z
             );
         } else {
-            color *= 0x09
-            const geometry = new THREE.BoxGeometry(1, 0.5, 2);
-            const material = new THREE.MeshLambertMaterial({ color: color });
-            const carMesh = new THREE.Mesh(geometry, material);
-            const adjustedCarData = {
-                ...carData,
-                speed: carData.speed * globalSpeedMultiplier
-            };
-            carMesh.position.set(
+            let newCarMesh;
+            let usingFallback;
+            if (carModel) {
+                // Use the preloaded car model
+                newCarMesh = carModel.clone();
+                usingFallback = false;
+            } else {
+                // Fallback to a box if the car model isn’t loaded
+                const geometry = new THREE.BoxGeometry(1, 0.5, 2);
+                const material = new THREE.MeshLambertMaterial({ color: 0xff0000 });
+                newCarMesh = new THREE.Mesh(geometry, material);
+                usingFallback = true;
+            }
+            
+            newCarMesh.position.set(
                 adjustedCarData.position.x,
                 adjustedCarData.position.y,
                 adjustedCarData.position.z
             );
+            scene.add(newCarMesh);
 
-            // Create text sprite with position
+            // Create sprite label
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
             canvas.width = 256;
@@ -227,13 +283,11 @@ function updateCars(carDataList) {
                 adjustedCarData.position.z
             );
             sprite.scale.set(4, 4, 1);
-            
-            scene.add(carMesh);
             scene.add(sprite);
-            
+
             cars.push({
                 id: carData.id,
-                mesh: carMesh,
+                mesh: newCarMesh,
                 label: sprite,
                 direction: new THREE.Vector3(
                     adjustedCarData.direction.x,
@@ -245,10 +299,12 @@ function updateCars(carDataList) {
                     adjustedCarData.position.y,
                     adjustedCarData.position.z
                 ),
+                usingFallback: usingFallback  // Flag to indicate if this car used the fallback model
             });
         }
     });
 }
+
 
 function updateTrafficLights(trafficLightData) {
     trafficLights.forEach((lightObj) => {
@@ -452,12 +508,25 @@ function animate() {
 
     cars.forEach((car) => {
         if (car.targetPosition) {
-            car.mesh.position.lerp(car.mesh.position, 0.1);
+            // Lerp between current position and target position
+            car.mesh.position.lerp(car.targetPosition, 0.1);
+            
+            // Update the label position to follow the car
+            car.label.position.set(
+                car.mesh.position.x,
+                car.mesh.position.y + 2,
+                car.mesh.position.z
+            );
+
+            // Optional: rotate car to face direction of travel
+            if (car.direction) {
+                const angle = Math.atan2(car.direction.x, car.direction.z);
+                car.mesh.rotation.y = angle;
+            }
         }
     });
 
     if (controls) controls.update();
-
     renderer.render(scene, camera);
 }
 

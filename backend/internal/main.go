@@ -87,10 +87,6 @@ var intersectionStates = [4]IntersectionState{
 	},
 }
 
-// demand[0] => total demand on North-South
-// demand[1] => total demand on East-West
-var demand = []float64{0, 0}
-
 // WebSocket management
 var upgrader = websocket.Upgrader{}
 var clients = make(map[*websocket.Conn]bool)
@@ -141,83 +137,54 @@ var spawnPoints = []struct {
 	{X: 65, Z: 89, DirX: -1, DirZ: 0, SpeedMin: 3, SpeedMax: 4},
 }
 
-type IntersectionZone struct {
-	Index      int
-	MinX, MaxX float64
-	MinZ, MaxZ float64
-}
-
-var intersectionZones = []IntersectionZone{
-	{
-		Index: 0,
-		MinX:  -30, MaxX: 30,
-		MinZ: -30, MaxZ: 30,
-	},
-	{
-		Index: 1,
-		MinX:  -110, MaxX: -70,
-		MinZ: -30, MaxZ: 30,
-	},
-	{
-		Index: 2,
-		MinX:  -110, MaxX: -70,
-		MinZ: 70, MaxZ: 110,
-	},
-	{
-		Index: 3,
-		MinX:  -30, MaxX: 30,
-		MinZ: 70, MaxZ: 110,
-	},
-}
-
 // Our global cars array uses sensor.CarData
 var (
-	cars     = []sensor.CarData{
+	cars = []sensor.CarData{
 		{
 			ID:        "car1",
-			Position:  sensor.Vector3{X: -2, Y: 0.25, Z: -50},
+			Position:  sensor.Vector3{X: -2, Y: 0.75, Z: -50},
 			Direction: sensor.Vector3{X: 0, Y: 0, Z: 1},
 			Speed:     5,
 		},
 		{
 			ID:        "car2",
-			Position:  sensor.Vector3{X: 2, Y: 0.25, Z: 50},
+			Position:  sensor.Vector3{X: 2, Y: 0.75, Z: 50},
 			Direction: sensor.Vector3{X: 0, Y: 0, Z: -1},
 			Speed:     5,
 		},
 		{
 			ID:        "car3",
-			Position:  sensor.Vector3{X: -50, Y: 0.25, Z: 2},
+			Position:  sensor.Vector3{X: -50, Y: 0.75, Z: 2},
 			Direction: sensor.Vector3{X: 1, Y: 0, Z: 0},
 			Speed:     5,
 		},
 		{
 			ID:        "car4",
-			Position:  sensor.Vector3{X: 50, Y: 0.25, Z: -2},
+			Position:  sensor.Vector3{X: 50, Y: 0.75, Z: -2},
 			Direction: sensor.Vector3{X: -1, Y: 0, Z: 0},
 			Speed:     5,
 		},
 		{
 			ID:        "car5",
-			Position:  sensor.Vector3{X: -2, Y: 0.25, Z: -59},
+			Position:  sensor.Vector3{X: -2, Y: 0.75, Z: -59},
 			Direction: sensor.Vector3{X: 0, Y: 0, Z: 1},
 			Speed:     3,
 		},
 		{
 			ID:        "car6",
-			Position:  sensor.Vector3{X: 2, Y: 0.25, Z: 59},
+			Position:  sensor.Vector3{X: 2, Y: 0.75, Z: 59},
 			Direction: sensor.Vector3{X: 0, Y: 0, Z: -1},
 			Speed:     3,
 		},
 		{
 			ID:        "car7",
-			Position:  sensor.Vector3{X: -59, Y: 0.25, Z: 2},
+			Position:  sensor.Vector3{X: -59, Y: 0.75, Z: 2},
 			Direction: sensor.Vector3{X: 1, Y: 0, Z: 0},
 			Speed:     3,
 		},
 		{
 			ID:        "car8",
-			Position:  sensor.Vector3{X: 59, Y: 0.25, Z: -2},
+			Position:  sensor.Vector3{X: 59, Y: 0.75, Z: -2},
 			Direction: sensor.Vector3{X: -1, Y: 0, Z: 0},
 			Speed:     3,
 		},
@@ -227,6 +194,12 @@ var (
 
 var sensorData = make(map[int]sensor.SensorDataMessage)
 var sensorDataMutex = sync.Mutex{}
+
+// ---------- NEW: Global variables for smooth turning ----------
+var carTargetDirection = make(map[string]sensor.Vector3)
+var carTargetDirectionMutex = sync.Mutex{}
+
+const turnRate = 0.785398 // Maximum turn rate in radians per second (~45°/s)
 
 // We'll define a global slice of "stop zones" for each intersection approach
 // so that getRecommendedSpeed can see them as obstacles.
@@ -271,6 +244,27 @@ var stopZones = []StopZone{
 
 var rng = rand.New(rand.NewSource(time.Now().UnixNano()))
 
+// ---------- NEW: Global variables for turning logic ----------
+
+// We define approximate intersection centers based on the stop zones.
+// Intersection 0: center around (0, 0)
+// Intersection 1: center around (-92, 0)
+// Intersection 2: center around (-92, 92)
+// Intersection 3: center around (0, 92)
+var intersectionCenters = []Vector3{
+	{X: 0, Y: 0, Z: 0},
+	{X: -92, Y: 0, Z: 0},
+	{X: -92, Y: 0, Z: 92},
+	{X: 0, Y: 0, Z: 92},
+}
+
+// carLastIntersection tracks for each car (by ID) the last intersection (by index)
+// where a turning decision has been applied.
+var carLastIntersection = make(map[string]int)
+var carLastIntersectionMutex = sync.Mutex{}
+
+// ---------------- End New Variables ----------------
+
 // Add new struct for settings
 type Settings struct {
 	Type                  string               `json:"type"`
@@ -291,6 +285,11 @@ type SettingsResponse struct {
 	Message string `json:"message"`
 }
 
+var (
+	globalSpeedMultiplier = 1.0
+	globalSpeedMutex      = sync.RWMutex{}
+)
+
 func main() {
 	// MQTT setup
 	opts := mqtt.NewClientOptions()
@@ -303,7 +302,7 @@ func main() {
 	defer mqttClient.Disconnect(250)
 
 	// Subscribe to sensor topics
-	for i := 0; i < 16; i++ {  // Changed from 4 to 16 to subscribe to all sensors
+	for i := 0; i < 16; i++ { // Changed from 4 to 16 to subscribe to all sensors
 		topic := "smartcity/sensors/" + fmt.Sprint(i)
 		mqttClient.Subscribe(topic, 0, handleSensorData)
 	}
@@ -376,50 +375,120 @@ func updateCarPositions(deltaTime float64) {
 	carsMutex.Lock()
 	defer carsMutex.Unlock()
 
-	accel := 2.0
-    minSpeed := 0.5
-	
+	globalSpeedMutex.RLock()
+	speedMultiplier := globalSpeedMultiplier
+	globalSpeedMutex.RUnlock()
+
+	accel := 2.0 * speedMultiplier
+	minSpeed := 0.5 * speedMultiplier
+
 	for i := range cars {
 		car := &cars[i]
-		targetSpeed := getRecommendedSpeed(*car, cars, stopZones)
+		// ----- NEW: Smooth turning update -----
+		carTargetDirectionMutex.Lock()
+		target, exists := carTargetDirection[car.ID]
+		if exists {
+			// Gradually update car.Direction toward the target.
+			newDir := smoothTurn(car.Direction, target, deltaTime)
+			car.Direction = newDir
+			// If nearly aligned, clear the target.
+			if angleDiff(car.Direction, target) < 0.01 {
+				delete(carTargetDirection, car.ID)
+			}
+		}
+		carTargetDirectionMutex.Unlock()
+		// ----------------------------------------
+
+		targetSpeed := getRecommendedSpeed(*car, cars, stopZones) * speedMultiplier
 
 		// If target speed > 0 (e.g., green light) but car is stopped,
-		// give it a minimum starting speed
+		// give it a minimum starting speed.
 		if targetSpeed > 0 && car.Speed < 0.1 {
 			car.Speed = minSpeed
 		}
 
-		// Then apply normal acceleration/deceleration
+		// Apply acceleration or deceleration.
 		if car.Speed < targetSpeed {
 			car.Speed = math.Min(car.Speed+accel*deltaTime, targetSpeed)
 		} else {
 			car.Speed = math.Max(car.Speed-accel*deltaTime, targetSpeed)
 		}
 
-		// Move
+		// Move the car.
 		car.Position.X += car.Direction.X * car.Speed * deltaTime
 		car.Position.Z += car.Direction.Z * car.Speed * deltaTime
 	}
 
-	// Check if cars are out of bounds and respawn them
+	// Check if cars are out of bounds and respawn them.
 	for i := range cars {
 		car := &cars[i]
 		if car.Position.Z < -65 || car.Position.Z > 165 || car.Position.X > 65 || car.Position.X < -145 {
-			// Pick a random spawn point
 			sp := spawnPoints[rng.Intn(len(spawnPoints))]
-
-			// Reset position to spawn point
 			car.Position.X = sp.X
-			car.Position.Y = 0.25
+			car.Position.Y = 0.75
 			car.Position.Z = sp.Z
-
-			// Set direction
 			car.Direction.X = sp.DirX
 			car.Direction.Y = 0
 			car.Direction.Z = sp.DirZ
-
-			// Set random speed within spawn point's range
 			car.Speed = sp.SpeedMin + rng.Float64()*(sp.SpeedMax-sp.SpeedMin)
+		}
+	}
+
+	// Process turning decisions at intersections (sets target directions).
+	updateCarTurns()
+}
+
+// updateCarTurns checks if a car is near an intersection center,
+// and if so, applies a turn decision (right: 25%, left: 25%, straight: 50%)
+// by setting a target direction.
+func updateCarTurns() {
+	const leftTurnThreshold float64 = 4.0
+	const rightTurnThreshold float64 = 8.5
+	carLastIntersectionMutex.Lock()
+	defer carLastIntersectionMutex.Unlock()
+
+	for i := range cars {
+		car := &cars[i]
+		processed := false
+		// Check each intersection center.
+		for idx, center := range intersectionCenters {
+			dx := car.Position.X - center.X
+			dz := car.Position.Z - center.Z
+			dist := math.Sqrt(dx*dx + dz*dz)
+			// Process a turn decision only if the car is close enough (within rightTurnThreshold).
+			if dist < rightTurnThreshold {
+				// Only decide once per intersection.
+				if last, exists := carLastIntersection[car.ID]; !exists || last != idx {
+					r := rng.Float64()
+					var desiredTarget sensor.Vector3
+					if r < 0.25 {
+						// Right turn: allowed if within rightTurnThreshold.
+						desiredTarget = sensor.Vector3{X: -car.Direction.Z, Y: 0.75, Z: car.Direction.X}
+					} else if r < 0.5 {
+						// Left turn: only allowed if the car is within leftTurnThreshold.
+						if dist < leftTurnThreshold {
+							desiredTarget = sensor.Vector3{X: car.Direction.Z, Y: 0.75, Z: -car.Direction.X}
+						} else {
+							// If not close enough for a left turn, default to going straight.
+							desiredTarget = car.Direction
+						}
+					} else {
+						// Straight: keep the current direction.
+						desiredTarget = car.Direction
+					}
+					// Record the desired target so that updateCarPositions will smooth the turn.
+					carTargetDirectionMutex.Lock()
+					carTargetDirection[car.ID] = desiredTarget
+					carTargetDirectionMutex.Unlock()
+					carLastIntersection[car.ID] = idx
+				}
+				processed = true
+				break // process only one intersection per car.
+			}
+		}
+		// If the car is not near any intersection center (i.e. outside rightTurnThreshold), clear its record.
+		if !processed {
+			delete(carLastIntersection, car.ID)
 		}
 	}
 }
@@ -500,19 +569,6 @@ func calculateIntersectionDemand(intersectionIndex int) {
 	westSensor := sensorData[baseIndex+3]
 	eastWestDemand := calculatePhaseDemand(eastSensor, westSensor)
 	state.Demand[1] = eastWestDemand
-
-	// Log detailed demand information
-	fmt.Printf("Intersection %d Demand:\n", intersectionIndex)
-	fmt.Printf("  North-South (Phase 0):\n")
-	fmt.Printf("    North: %d cars (wait: %.2fs)\n", len(northSensor.CarIDs), northSensor.WaitTime)
-	fmt.Printf("    South: %d cars (wait: %.2fs)\n", len(southSensor.CarIDs), southSensor.WaitTime)
-	fmt.Printf("    Total N-S Demand: %.2f\n", northSouthDemand)
-	fmt.Printf("  East-West (Phase 1):\n")
-	fmt.Printf("    East: %d cars (wait: %.2fs)\n", len(eastSensor.CarIDs), eastSensor.WaitTime)
-	fmt.Printf("    West: %d cars (wait: %.2fs)\n", len(westSensor.CarIDs), westSensor.WaitTime)
-	fmt.Printf("    Total E-W Demand: %.2f\n", eastWestDemand)
-	fmt.Printf("  Current Phase: %d\n", state.CurrentPhase)
-	fmt.Printf("  Time in Phase: %.2fs\n\n", state.TimeInPhase)
 }
 
 func calculatePhaseDemand(sensor1, sensor2 sensor.SensorDataMessage) float64 {
@@ -589,14 +645,6 @@ func inCurrentPhase(lightIndex, intersectionIndex int) bool {
 	return localIndex >= 2
 }
 
-// Just an example to retrieve a single stop zone by traffic light index (unused here)
-// func getStopZoneForLight(lightIndex int) Vector3 {
-// 	// (You already have a global stopZones slice; you can unify if you wish.)
-// 	// This function is unused in the recommended-speed approach, but left for reference.
-// 	// ...
-// 	return Vector3{X: 0, Y: 0, Z: 0}
-// }
-
 // Car-spawning logic
 func spawnRandomCars() {
 	// For example, spawn a car every 3 seconds
@@ -611,7 +659,12 @@ func spawnRandomCars() {
 
 func spawnCarRandomLane() {
 	sp := spawnPoints[rng.Intn(len(spawnPoints))]
-	speed := sp.SpeedMin + rng.Float64()*(sp.SpeedMax-sp.SpeedMin)
+
+	globalSpeedMutex.RLock()
+	multiplier := globalSpeedMultiplier
+	globalSpeedMutex.RUnlock()
+
+	speed := (sp.SpeedMin + rng.Float64()*(sp.SpeedMax-sp.SpeedMin)) * multiplier
 	carCounter++
 	newCarID := "car" + strconv.FormatInt(carCounter, 10)
 
@@ -619,7 +672,7 @@ func spawnCarRandomLane() {
 		ID: newCarID,
 		Position: sensor.Vector3{
 			X: sp.X,
-			Y: 0.25,
+			Y: 0.75,
 			Z: sp.Z,
 		},
 		Direction: sensor.Vector3{
@@ -633,49 +686,12 @@ func spawnCarRandomLane() {
 	carsMutex.Lock()
 	cars = append(cars, newCar)
 	carsMutex.Unlock()
-	// fmt.Printf("Spawned %v at (%.2f, %.2f) heading (%.2f, %.2f), speed=%.2f\n",
-	// 	newCarID, sp.X, sp.Z, sp.DirX, sp.DirZ, speed)
 }
-
-// (Optional) Old approach: Dot-product checks for a near stop zone
-func isCarApproachingStopZone(car sensor.CarData, stopZone Vector3) bool {
-	threshold := 0.5
-	dx := stopZone.X - car.Position.X
-	dy := stopZone.Y - car.Position.Y
-	dz := stopZone.Z - car.Position.Z
-	projection := dx*car.Direction.X + dy*car.Direction.Y + dz*car.Direction.Z
-
-	return (projection > 0 && projection < threshold)
-}
-
-// (Optional) Old approach: Simple check for cars in front
-func isCarShouldMove(car sensor.CarData) bool {
-	threshold := 3.1
-	for i := range cars {
-		car2 := &cars[i]
-		if car2.ID != car.ID &&
-			car.Direction.X == car2.Direction.X &&
-			car.Direction.Z == car2.Direction.Z {
-
-			dx := car2.Position.X - car.Position.X
-			dy := car2.Position.Y - car.Position.Y
-			dz := car2.Position.Z - car.Position.Z
-			projection := dx*car.Direction.X + dy*car.Direction.Y + dz*car.Direction.Z
-
-			if projection > 0 && projection < threshold {
-				return false
-			}
-		}
-	}
-	return true
-}
-
-// --- Unified Stopping Logic (Recommended) ---
 
 // getRecommendedSpeed returns a float speed after checking the distance
 // to the nearest obstacle in front (car or stop zone).
 func getRecommendedSpeed(car sensor.CarData, allCars []sensor.CarData, stopZones []StopZone) float64 {
-	const minDist = 3.0   // stop if obstacle < 2m
+	const minDist = 6.0   // stop if obstacle < 2m
 	const maxDist = 10.0  // full speed if obstacle >= 10m
 	const baseSpeed = 4.0 // normal cruising speed
 
@@ -695,6 +711,13 @@ func getRecommendedSpeed(car sensor.CarData, allCars []sensor.CarData, stopZones
 	return baseSpeed * ratio
 }
 
+// sameDirection returns true if the angle between a and b is less than tol.
+func sameDirection(a, b sensor.Vector3, tol float64) bool {
+	angleA := math.Atan2(a.Z, a.X)
+	angleB := math.Atan2(b.Z, b.X)
+	return math.Abs(normalizeAngle(angleB-angleA)) < tol
+}
+
 // findClosestObstacleDistance returns the distance to the nearest obstacle
 // (a car in front or a stop zone) or -1 if none is in front
 func findClosestObstacleDistance(
@@ -710,10 +733,8 @@ func findClosestObstacleDistance(
 		if other.ID == car.ID {
 			continue
 		}
-		// Skip if not same direction, etc.
-		sameDir := (car.Direction.X == other.Direction.X &&
-			car.Direction.Z == other.Direction.Z)
-		if !sameDir {
+		// Use an angle tolerance rather than exact equality.
+		if !sameDirection(car.Direction, other.Direction, 0.2) {
 			continue
 		}
 		dist := distanceInFront(car, other.Position.X, other.Position.Z)
@@ -724,13 +745,10 @@ func findClosestObstacleDistance(
 
 	// 2) Check stop zones
 	for _, sz := range stopZones {
-		// If traffic light for that zone is green, skip it
-		// (no reason to stop at a green light).
+		// Skip if the corresponding traffic light is green.
 		if trafficLights[sz.TrafficLightIdx].State == "green" {
 			continue
 		}
-
-		// If red or yellow, treat it as an obstacle:
 		dist := distanceInFront(car, sz.Position.X, sz.Position.Z)
 		if dist >= 0 && dist < closest {
 			closest = dist
@@ -744,16 +762,29 @@ func findClosestObstacleDistance(
 }
 
 // distanceInFront checks if (tx, tz) is ahead of the car (dot > 0)
-// and returns the distance if so, or -1 if behind.
+// and returns the distance if so, or -1 if behind or too far to the side
 func distanceInFront(car sensor.CarData, tx, tz float64) float64 {
 	dx := tx - car.Position.X
 	dz := tz - car.Position.Z
+
+	// Calculate dot product to see if point is in front
 	dot := dx*car.Direction.X + dz*car.Direction.Z
 
 	// If dot <= 0 => behind or perpendicular
 	if dot <= 0 {
 		return -1
 	}
+
+	// Calculate perpendicular distance from the car's path to the point
+	// using cross product magnitude
+	crossProduct := math.Abs(dx*car.Direction.Z - dz*car.Direction.X)
+
+	// If point is too far to the side (more than 2 meters), ignore it
+	const lateralThreshold = 2.0
+	if crossProduct > lateralThreshold {
+		return -1
+	}
+
 	return math.Sqrt(dx*dx + dz*dz)
 }
 
@@ -811,10 +842,10 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 func updateIntersectionSettings(settings Settings) {
 	fmt.Printf("Updating intersection settings with: %+v\n", settings)
 
-	// (Optional) handle GlobalSpeedMultiplier if you want a global effect on speeds
-	// for i := range cars {
-	//    cars[i].Speed *= settings.GlobalSpeedMultiplier
-	// }
+	// Update global speed multiplier
+	globalSpeedMutex.Lock()
+	globalSpeedMultiplier = settings.GlobalSpeedMultiplier
+	globalSpeedMutex.Unlock()
 
 	// Update intersection settings
 	for i := range intersectionStates {
@@ -848,11 +879,47 @@ func handleMessages() {
 func logCarPositions() {
 	carsMutex.RLock()
 	defer carsMutex.RUnlock()
-	
+	// Uncomment for logging if needed:
 	// for _, car := range cars {
 	//     if car.ID == "car1" {
 	//         fmt.Printf("Car1 position: (%.2f, %.2f)\n", car.Position.X, car.Position.Z)
 	//         break
 	//     }
 	// }
+}
+
+// smoothTurn gradually rotates the current normalized direction toward the target normalized direction.
+func smoothTurn(current, target sensor.Vector3, deltaTime float64) sensor.Vector3 {
+	currentAngle := math.Atan2(current.Z, current.X)
+	targetAngle := math.Atan2(target.Z, target.X)
+	diff := normalizeAngle(targetAngle - currentAngle)
+	maxTurn := turnRate * deltaTime
+	if math.Abs(diff) < maxTurn {
+		currentAngle = targetAngle
+	} else {
+		if diff > 0 {
+			currentAngle += maxTurn
+		} else {
+			currentAngle -= maxTurn
+		}
+	}
+	return sensor.Vector3{X: math.Cos(currentAngle), Y: 0, Z: math.Sin(currentAngle)}
+}
+
+// normalizeAngle brings any angle into the range -π..π.
+func normalizeAngle(angle float64) float64 {
+	for angle > math.Pi {
+		angle -= 2 * math.Pi
+	}
+	for angle < -math.Pi {
+		angle += 2 * math.Pi
+	}
+	return angle
+}
+
+// angleDiff returns the absolute difference in angle between two normalized directions.
+func angleDiff(a, b sensor.Vector3) float64 {
+	angleA := math.Atan2(a.Z, a.X)
+	angleB := math.Atan2(b.Z, b.X)
+	return math.Abs(normalizeAngle(angleB - angleA))
 }
